@@ -6,20 +6,28 @@ export const VehiclePage = () => {
   const { vehicles, addVehicle, removeVehicle } = useApp();
 
   const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
   const [fuelType, setFuelType] = useState('Petrol');
   const [vehicleType, setVehicleType] = useState('Sedan');
 
+  const brandModels = {
+    Toyota: ["Corolla", "Aqua", "Vitz"],
+    Honda: ["Civic", "Vezel", "Fit"],
+    Nissan: ["Leaf", "X-Trail"]
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!brand.trim()) return;
+    if (!brand || !model) return;
 
     addVehicle({
-      brand: brand.trim(),
+      brand: `${brand} ${model}`,
       fuelType,
       vehicleType
     });
 
     setBrand('');
+    setModel('');
     setFuelType('Petrol');
     setVehicleType('Sedan');
   };
@@ -59,21 +67,48 @@ export const VehiclePage = () => {
             <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Add New Vehicle</h2>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', alignItems: 'end' }}>
-            {/* Brand Input */}
+          <form onSubmit={handleSubmit} className="vehicle-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', alignItems: 'end' }}>
+            {/* Brand Dropdown */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="vehicle-brand">
-                Vehicle Brand & Model
+                Vehicle Brand
               </label>
-              <input
+              <select
                 id="vehicle-brand"
-                type="text"
-                className="form-input"
-                placeholder="e.g. Toyota Axio, Honda Fit"
+                className="form-select"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
                 required
-              />
+              >
+                <option value="" disabled>Select Brand</option>
+                {Object.keys(brandModels).map(b => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Model Dropdown */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="vehicle-model">
+                Vehicle Model
+              </label>
+              <select
+                id="vehicle-model"
+                className="form-select"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select Model</option>
+                <option value="Corolla">Corolla</option>
+                <option value="Aqua">Aqua</option>
+                <option value="Vitz">Vitz</option>
+                <option value="Civic">Civic</option>
+                <option value="Vezel">Vezel</option>
+                <option value="Fit">Fit</option>
+                <option value="Leaf">Leaf</option>
+                <option value="X-Trail">X-Trail</option>
+              </select>
             </div>
 
             {/* Fuel Type Dropdown */}

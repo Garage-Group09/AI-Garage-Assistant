@@ -96,32 +96,39 @@ body {
 }
 
 .navbar-logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
   text-decoration: none;
   color: #ffffff;
   font-weight: 800;
-  font-size: 1.35rem;
-  letter-spacing: -0.5px;
+  font-size: 1.3rem;
+  letter-spacing: -0.4px;
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, var(--accent-orange), #ea580c);
   color: white;
-  border-radius: 10px;
-  display: flex;
+  border-radius: 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+  flex-shrink: 0;
   transform: rotate(-3deg);
   transition: var(--transition-fast);
 }
 
 .navbar-logo:hover .logo-icon {
   transform: rotate(0deg) scale(1.05);
+}
+
+.logo-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
 }
 
 .logo-highlight {
@@ -131,8 +138,34 @@ body {
 .nav-menu {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   list-style: none;
+  flex: 1;
+  margin: 0 1.5rem 0 2.5rem;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.navbar-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+}
+
+.navbar-username {
+  color: white;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .nav-link {
@@ -441,22 +474,36 @@ body {
 }
 
 /* Responsive Breakpoints */
-@media (max-width: 768px) {
-  .mobile-toggle {
-    display: block;
+@media (max-width: 900px) {
+  .navbar-container {
+    padding: 0.75rem 1rem;
   }
 
+  .mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-username {
+    display: none;
+  }
+
+  /* Navbar items stack vertically on small screens */
   .nav-menu {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
+    margin: 0 !important;
+    background: #0f172a;
     flex-direction: column;
-    padding: 1rem;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    border-bottom: 1px solid var(--border-color);
+    padding: 1.2rem 1.25rem;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
+    border-bottom: 2px solid var(--accent-orange);
     display: none;
+    gap: 0.6rem;
+    z-index: 1000;
   }
 
   .nav-menu.open {
@@ -465,7 +512,29 @@ body {
 
   .nav-link {
     width: 100%;
-    padding: 0.8rem 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    color: #e2e8f0;
+    justify-content: flex-start;
+  }
+
+  .nav-link.active {
+    background-color: rgba(249, 115, 22, 0.2);
+    border: 1px solid rgba(249, 115, 22, 0.5);
+    color: white;
+  }
+
+  .nav-link.active::after {
+    display: none;
+  }
+
+  /* Buttons resize to full width on mobile (excluding circular chat buttons) */
+  .btn:not(.btn-sm):not(.nav-link),
+  form:not(.diagnosis-input-form) .btn,
+  .vehicle-form-grid button[type="submit"],
+  .vehicle-form-grid .btn {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   .container {
@@ -474,6 +543,44 @@ body {
 
   .card {
     padding: 1.25rem;
+  }
+
+  /* Vehicle Form on Mobile View */
+  .vehicle-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .vehicle-form-grid .form-group {
+    margin-bottom: 0.3rem !important;
+  }
+
+  /* Diagnosis Chat Box on Mobile View */
+  .diagnosis-chat-card {
+    height: calc(100vh - 200px) !important;
+    min-height: 480px;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .diagnosis-messages-container {
+    padding: 1rem !important;
+    gap: 0.9rem !important;
+  }
+
+  .diagnosis-bubble {
+    max-width: 88% !important;
+    font-size: 0.9rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .diagnosis-input-form {
+    padding: 0.75rem 0.9rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .diagnosis-input-form .form-input {
+    font-size: 0.88rem !important;
+    padding: 0.65rem 0.9rem !important;
   }
 }
 
