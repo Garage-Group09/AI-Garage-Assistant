@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 
 /**
  * Modern Header Navigation Component for AI Garage Assistant.
- * Contains only essential navigation links: Home, Vehicle, Diagnosis, Garage Finder.
+ * Navigation links: Home, Vehicle, Diagnosis, Garage Finder, Admin Panel.
  */
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -23,26 +23,17 @@ export const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        {/* Brand Logo */}
+        {/* Brand Logo with Small Icon */}
         <NavLink to="/" className="navbar-logo" onClick={closeMenu}>
           <div className="logo-icon">
-            <Wrench size={22} />
+            <Wrench size={19} />
           </div>
-          <span>
+          <span className="logo-text">
             Smart Garage<span className="logo-highlight">.AI</span>
           </span>
         </NavLink>
 
-        {/* Hamburger Toggle for Mobile */}
-        <button
-          className="mobile-toggle"
-          onClick={toggleMenu}
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X size={26} color="white" /> : <Menu size={26} color="white" />}
-        </button>
-
-        {/* Essential Navigation Links: Home, Vehicle, Diagnosis, Garage Finder */}
+        {/* Centered Navigation Links: Home, Vehicle, Diagnosis, Garage Finder, Admin Panel */}
         <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
           <li>
             <NavLink
@@ -97,10 +88,10 @@ export const Navbar = () => {
           </li>
         </ul>
 
-        {/* Auth chip: shows user avatar+name+logout when logged in, Login link otherwise */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+        {/* Right Actions: Auth Chip / Login + Mobile Hamburger Toggle */}
+        <div className="navbar-actions">
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.3rem 0.75rem 0.3rem 0.3rem' }}>
+            <div className="navbar-user-chip">
               {/* Avatar circle */}
               <div style={{
                 width: '30px', height: '30px', borderRadius: '50%',
@@ -110,7 +101,7 @@ export const Navbar = () => {
               }}>
                 {user.name.charAt(0).toUpperCase()}
               </div>
-              <span style={{ color: 'white', fontSize: '0.88rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <span className="navbar-username">
                 {user.name}
               </span>
               <button
@@ -138,7 +129,7 @@ export const Navbar = () => {
                 background: 'var(--accent-orange)', border: 'none',
                 borderRadius: '999px', padding: '0.4rem 1rem',
                 color: 'white', fontSize: '0.88rem', fontWeight: 700,
-                cursor: 'pointer', transition: 'opacity 0.2s'
+                cursor: 'pointer', transition: 'opacity 0.2s', flexShrink: 0
               }}
               onMouseOver={e => e.currentTarget.style.opacity = '0.85'}
               onMouseOut={e => e.currentTarget.style.opacity = '1'}
@@ -147,6 +138,15 @@ export const Navbar = () => {
               Login
             </button>
           )}
+
+          {/* Hamburger Toggle for Mobile */}
+          <button
+            className="mobile-toggle"
+            onClick={toggleMenu}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={26} color="white" /> : <Menu size={26} color="white" />}
+          </button>
         </div>
       </div>
     </nav>

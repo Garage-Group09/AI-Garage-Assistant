@@ -67,7 +67,7 @@ export const VehiclePage = () => {
             <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Add New Vehicle</h2>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', alignItems: 'end' }}>
+          <form onSubmit={handleSubmit} className="vehicle-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', alignItems: 'end' }}>
             {/* Brand Dropdown */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="vehicle-brand">
@@ -77,10 +77,7 @@ export const VehiclePage = () => {
                 id="vehicle-brand"
                 className="form-select"
                 value={brand}
-                onChange={(e) => {
-                  setBrand(e.target.value);
-                  setModel('');
-                }}
+                onChange={(e) => setBrand(e.target.value)}
                 required
               >
                 <option value="" disabled>Select Brand</option>
@@ -101,12 +98,16 @@ export const VehiclePage = () => {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 required
-                disabled={!brand}
               >
                 <option value="" disabled>Select Model</option>
-                {brand && brandModels[brand].map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
+                <option value="Corolla">Corolla</option>
+                <option value="Aqua">Aqua</option>
+                <option value="Vitz">Vitz</option>
+                <option value="Civic">Civic</option>
+                <option value="Vezel">Vezel</option>
+                <option value="Fit">Fit</option>
+                <option value="Leaf">Leaf</option>
+                <option value="X-Trail">X-Trail</option>
               </select>
             </div>
 

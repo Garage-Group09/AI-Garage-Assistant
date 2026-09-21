@@ -24,12 +24,25 @@ export const DiagnosisPage = () => {
 
   const chatBottomRef = useRef(null);
 
-  // Initial chat history with welcome message on page load
+  // Initial chat history with sequential demo flow messages on page load
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'ai',
-      text: 'Hello! I am your AI Garage Assistant. How can I help diagnose your vehicle today? Describe any symptoms, unusual noises, or warning lights in English, Sinhala (සිංහල), or Tamil (தமிழ்).',
+      text: 'Hello! I am your AI Garage Assistant. How can I help diagnose your vehicle today?',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    },
+    {
+      id: 2,
+      sender: 'ai',
+      text: 'Please describe symptoms like engine knocking, brake noise, or warning lights.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    },
+    {
+      id: 3,
+      sender: 'ai',
+      text: "For example: 'My car makes a rattling sound when I accelerate'.",
+      suggestion: 'My car makes a rattling sound when I accelerate',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -286,7 +299,7 @@ export const DiagnosisPage = () => {
 
       {/* Main Chat Container */}
       <div
-        className="card"
+        className="card diagnosis-chat-card"
         style={{
           padding: 0,
           display: 'flex',
@@ -300,6 +313,7 @@ export const DiagnosisPage = () => {
       >
         {/* Chat Top Header Bar (NOTE: "Active: Toyota Corolla Axio" label removed as requested) */}
         <div
+          className="diagnosis-chat-header"
           style={{
             background: 'linear-gradient(135deg, #0f172a, #1e3a8a)',
             color: 'white',
@@ -325,6 +339,7 @@ export const DiagnosisPage = () => {
 
         {/* Messages Scroll Area */}
         <div
+          className="diagnosis-messages-container"
           style={{
             flex: 1,
             padding: '1.5rem',
@@ -338,6 +353,7 @@ export const DiagnosisPage = () => {
           {messages.map((msg) => (
             <div
               key={msg.id}
+              className={`diagnosis-message-row ${msg.sender === 'user' ? 'user-row' : 'ai-row'}`}
               style={{
                 display: 'flex',
                 justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
@@ -354,6 +370,7 @@ export const DiagnosisPage = () => {
 
               {/* Chat Bubble */}
               <div
+                className="diagnosis-bubble"
                 style={{
                   maxWidth: '75%',
                   background: msg.sender === 'user'
@@ -371,6 +388,40 @@ export const DiagnosisPage = () => {
                 }}
               >
                 {msg.text}
+
+                {/* Optional interactive suggestion chip */}
+                {msg.suggestion && (
+                  <div style={{ marginTop: '0.65rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setInputText(msg.suggestion)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '999px',
+                        padding: '0.35rem 0.85rem',
+                        color: 'var(--primary-blue-mid)',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      title="Click to paste into diagnosis input"
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#dbeafe';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = '#eff6ff';
+                      }}
+                    >
+                      <span>💡 Try this:</span>
+                      <span style={{ fontStyle: 'italic' }}>"{msg.suggestion}"</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Footer of Bubble: Timestamp + Speaker button for AI responses */}
                 <div
@@ -435,6 +486,7 @@ export const DiagnosisPage = () => {
 
         {/* Input Bar Form */}
         <form
+          className="diagnosis-input-form"
           onSubmit={handleSendMessage}
           style={{
             padding: '1rem 1.2rem',
