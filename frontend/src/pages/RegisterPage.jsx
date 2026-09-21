@@ -1,18 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, User, Mail, Lock, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, CheckCircle2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const { registerUser } = useApp();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password) return;
+    setErrorMessage('');
+
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      setErrorMessage('Please fill in all required fields.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match. Please verify your password.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
     const success = await registerUser(name, email, password);
     if (success) {
       setTimeout(() => navigate('/login'), 1200);
@@ -137,7 +155,7 @@ export const RegisterPage = () => {
             </div>
 
             {/* Password Field */}
-            <div className="form-group" style={{ marginBottom: '1.8rem' }}>
+            <div className="form-group">
               <label className="form-label" htmlFor="reg-password">
                 Password
               </label>
@@ -159,11 +177,77 @@ export const RegisterPage = () => {
                   style={{ paddingLeft: '2.5rem' }}
                   placeholder="Create a strong password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
                   required
                 />
               </div>
             </div>
+
+            {/* Confirm Password Field */}
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label" htmlFor="reg-confirm-password">
+                Confirm Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock
+                  size={18}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted)'
+                  }}
+                />
+                <input
+                  id="reg-confirm-password"
+                  type="password"
+                  className="form-input"
+                  style={{
+                    paddingLeft: '2.5rem',
+                    borderColor: confirmPassword && password !== confirmPassword ? '#ef4444' : undefined,
+                    backgroundColor: confirmPassword && password !== confirmPassword ? '#fef2f2' : undefined
+                  }}
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  required
+                />
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p style={{ color: '#dc2626', fontSize: '0.82rem', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <AlertCircle size={14} /> Passwords do not match
+                </p>
+              )}
+            </div>
+
+            {/* Error Message Alert Banner */}
+            {errorMessage && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: 'var(--radius-md)',
+                  color: '#b91c1c',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  marginBottom: '1.2rem'
+                }}
+              >
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             {/* Register Button */}
             <button

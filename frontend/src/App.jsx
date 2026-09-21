@@ -9,6 +9,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { VehiclePage } from './pages/VehiclePage';
 import { DiagnosisPage } from './pages/DiagnosisPage';
 import { GarageFinderPage } from './pages/GarageFinderPage';
+import { AdminPanel } from './pages/AdminPanel';
 import { CheckCircle } from 'lucide-react';
 
 const ToastNotification = () => {
@@ -30,7 +31,7 @@ export const App = () => {
     <AppProvider>
       <Router>
         <div className="app-container">
-          {/* Navigation Bar - Home, Login, Vehicle, Diagnosis, Garage Finder */}
+          {/* Navigation Bar - Home, Login, Vehicle, Diagnosis, Garage Finder, Admin */}
           <Navbar />
 
           {/* Main Body */}
@@ -42,6 +43,7 @@ export const App = () => {
               <Route path="/vehicles" element={<VehiclePage />} />
               <Route path="/diagnosis" element={<DiagnosisPage />} />
               <Route path="/garages" element={<GarageFinderPage />} />
+              <Route path="/admin" element={<AdminPanel />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

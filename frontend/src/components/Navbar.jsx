@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Wrench, Home, Car, Cpu, MapPin, Menu, X, LogOut, LogIn } from 'lucide-react';
+import { Wrench, Home, Car, Cpu, MapPin, Menu, X, LogOut, LogIn, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 /**
@@ -83,6 +83,16 @@ export const Navbar = () => {
             >
               <MapPin size={18} />
               <span>Garage Finder</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              <Shield size={18} />
+              <span>Admin Panel</span>
             </NavLink>
           </li>
         </ul>
