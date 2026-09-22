@@ -23,7 +23,8 @@ public class VehicleController {
 
     @PostMapping
     public ResponseEntity<Vehicle> addVehicle(@RequestBody Vehicle vehicle) {
+        // vehicle now also carries modelId and year when supplied by the client
         Vehicle saved = vehicleRepository.save(vehicle);
         return ResponseEntity.ok(saved);
     }
-}
+}

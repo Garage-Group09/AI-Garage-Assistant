@@ -23,6 +23,12 @@ public class Vehicle {
     @Column(name = "Vehicle_Type")
     private String vehicleType;
 
+    @Column(name = "Model_ID")
+    private Integer modelId;
+
+    @Column(name = "Year")
+    private Integer year;
+
     public Integer getVehicleId() { return vehicleId; }
     public void setVehicleId(Integer vehicleId) { this.vehicleId = vehicleId; }
 
@@ -37,4 +43,10 @@ public class Vehicle {
 
     public String getVehicleType() { return vehicleType; }
     public void setVehicleType(String vehicleType) { this.vehicleType = vehicleType; }
-}
+
+    public Integer getModelId() { return modelId; }
+    public void setModelId(Integer modelId) { this.modelId = modelId; }
+
+    public Integer getYear() { return year; }
+    public void setYear(Integer year) { this.year = year; }
+}

@@ -4,54 +4,28 @@ import L from 'leaflet';
 import { MapPin, Phone, Share2, Star, Clock, Wrench, Search, Navigation, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-// High quality demo garage data for Northern Sri Lanka (Jaffna Region)
-const DEMO_GARAGES = [
-  {
-    id: 1,
-    name: 'Ilavenil Automotive Engineering',
-    rating: 5.0,
-    reviews: 23,
-    type: 'Auto repair shop',
-    address: 'Jaffna-Kankesanturai Rd',
-    phone: '077 292 9662',
-    phoneRaw: '0772929662',
-    lat: 9.6820,
-    lng: 80.0210,
-    openStatus: 'Open Now • 8:00 AM - 6:00 PM',
-    distance: '1.1 km away',
-    services: ['Engine Repair', 'Auto Diagnostics', 'Brake Systems', 'Electrical Work']
-  },
-  {
-    id: 2,
-    name: 'JS Motors',
-    rating: 5.0,
-    reviews: 5,
-    type: 'Auto repair shop',
-    address: 'M2VW+WV2, Kondavil-Irupalai Rd',
-    phone: '077 165 7750',
-    phoneRaw: '0771657750',
-    lat: 9.6950,
-    lng: 80.0350,
-    openStatus: 'Open Now • 8:30 AM - 6:30 PM',
-    distance: '2.4 km away',
-    services: ['Engine Tune-up', 'Oil & Filter Change', 'Wheel Alignment', 'General Maintenance']
-  },
-  {
-    id: 3,
-    name: 'Deiva Car Care',
-    rating: 4.4,
-    reviews: 36,
-    type: 'Auto repair shop',
-    address: 'Sirampirady Ln, Jaffna',
-    phone: '077 791 3930',
-    phoneRaw: '0777913930',
-    lat: 9.6686882,
-    lng: 80.0179374,
-    openStatus: 'Open • 9:00 AM - 5:00 PM (Closed Sundays)',
-    distance: '2.8 km away',
-    services: ['Engine Diagnostics', 'Brake Service', 'Spare Parts', 'General Repair']
-  }
-];
+// Default coordinates used when a garage record has no lat/lng in the DB
+const DEFAULT_CENTER = [9.6615, 80.0255]; // Jaffna, Sri Lanka
+
+/**
+ * Maps a Garage API response to the shape expected by this component.
+ * Fields that don't exist in the DB (lat, lng, services, etc.) get defaults.
+ */
+const toUiGarage = (g) => ({
+  id:          g.garageId,
+  name:        g.garageName    ?? 'Unknown Garage',
+  rating:      g.rating        ?? 0,
+  reviews:     0,
+  type:        g.specialization ?? 'Auto repair shop',
+  address:     g.location      ?? 'Location not specified',
+  phone:       g.phoneNo       ?? 'N/A',
+  phoneRaw:    (g.phoneNo ?? '').replace(/\D/g, ''),
+  lat:         DEFAULT_CENTER[0],
+  lng:         DEFAULT_CENTER[1],
+  openStatus:  'Contact for hours',
+  distance:    '',
+  services:    g.specialization ? [g.specialization] : ['General Repair']
+});
 
 /**
  * Helper component to re-center Leaflet Map when selected garage changes
@@ -107,10 +81,29 @@ const createCustomIcon = (isSelected) => {
  */
 export const GarageFinderPage = () => {
   const { showToast } = useApp();
-  const [garages] = useState(DEMO_GARAGES);
-  const [selectedGarage, setSelectedGarage] = useState(DEMO_GARAGES[0]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLocating, setIsLocating] = useState(false);
+
+  // ── Garage data from API ─────────────────────────────────────────────────
+  const [garages, setGarages]             = useState([]);
+  const [garagesLoading, setGaragesLoading] = useState(false);
+  const [selectedGarage, setSelectedGarage] = useState(null);
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [isLocating, setIsLocating]       = useState(false);
+
+  useEffect(() => {
+    setGaragesLoading(true);
+    fetch('http://localhost:8080/api/garages')
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then((data) => {
+        const mapped = data.map(toUiGarage);
+        setGarages(mapped);
+        if (mapped.length > 0) setSelectedGarage(mapped[0]);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch garages:', err);
+        showToast?.('Could not load garages from server.');
+      })
+      .finally(() => setGaragesLoading(false));
+  }, []);
 
   // Filter garages by search query (name, address, type, or service)
   const filteredGarages = garages.filter((g) =>
@@ -221,7 +214,7 @@ export const GarageFinderPage = () => {
           >
             {/* Interactive Leaflet Map centered on selected garage */}
             <MapContainer
-              center={[selectedGarage.lat, selectedGarage.lng]}
+              center={selectedGarage ? [selectedGarage.lat, selectedGarage.lng] : DEFAULT_CENTER}
               zoom={13}
               scrollWheelZoom={true}
               style={{ width: '100%', height: '100%' }}
@@ -231,7 +224,7 @@ export const GarageFinderPage = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              <MapRecenter center={[selectedGarage.lat, selectedGarage.lng]} />
+              {selectedGarage && <MapRecenter center={[selectedGarage.lat, selectedGarage.lng]} />}
 
               {garages.map((garage) => {
                 const isSelected = selectedGarage.id === garage.id;
