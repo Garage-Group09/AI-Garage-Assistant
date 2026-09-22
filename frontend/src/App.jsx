@@ -12,6 +12,13 @@ import { GarageFinderPage } from './pages/GarageFinderPage';
 import { AdminPanel } from './pages/AdminPanel';
 import { CheckCircle } from 'lucide-react';
 
+/** Route guard: renders children only when the logged-in user is an admin; otherwise redirects to /. */
+const AdminRoute = ({ children }) => {
+  const { user } = useApp();
+  if (!user || !user.isAdmin) return <Navigate to="/" replace />;
+  return children;
+};
+
 const ToastNotification = () => {
   const { toastMessage } = useApp();
   if (!toastMessage) return null;
@@ -43,7 +50,7 @@ export const App = () => {
               <Route path="/vehicles" element={<VehiclePage />} />
               <Route path="/diagnosis" element={<DiagnosisPage />} />
               <Route path="/garages" element={<GarageFinderPage />} />
-              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

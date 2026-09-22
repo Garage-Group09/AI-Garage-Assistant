@@ -36,7 +36,7 @@ export const AppProvider = ({ children }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setUser({ userId: data.userId, name: data.name, email: data.email, isLoggedIn: true });
+        setUser({ userId: data.userId, name: data.name, email: data.email, isAdmin: data.isAdmin === true, isLoggedIn: true });
         showToast(`Welcome back, ${data.name}!`);
         await fetchVehicles(data.userId);
         return true;
