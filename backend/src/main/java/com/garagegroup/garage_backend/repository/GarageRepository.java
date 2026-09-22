@@ -10,4 +10,7 @@ import java.util.List;
 public interface GarageRepository extends JpaRepository<Garage, Integer> {
     /** Returns all garages in a specific location (case-insensitive). */
     List<Garage> findByLocationContainingIgnoreCase(String location);
+
+    /** Returns garages whose Specialization contains the given keyword (case-insensitive). */
+    List<Garage> findBySpecializationContainingIgnoreCase(String keyword);
 }
