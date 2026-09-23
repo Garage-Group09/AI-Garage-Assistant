@@ -26,6 +26,9 @@ public class User {
     @Column(name = "Location")
     private String location;
 
+    @Column(name = "Is_Admin")
+    private boolean isAdmin;
+
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
 
@@ -43,4 +46,7 @@ public class User {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public boolean isAdmin() { return isAdmin; }
+    public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
 }

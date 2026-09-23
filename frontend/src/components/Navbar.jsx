@@ -76,16 +76,18 @@ export const Navbar = () => {
               <span>Garage Finder</span>
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/admin"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              onClick={closeMenu}
-            >
-              <Shield size={18} />
-              <span>Admin Panel</span>
-            </NavLink>
-          </li>
+          {user?.isAdmin && (
+            <li>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                onClick={closeMenu}
+              >
+                <Shield size={18} />
+                <span>Admin Panel</span>
+              </NavLink>
+            </li>
+          )}
         </ul>
 
         {/* Right Actions: Auth Chip / Login + Mobile Hamburger Toggle */}

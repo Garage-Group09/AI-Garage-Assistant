@@ -19,7 +19,8 @@ export const AppProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         setVehicles(data.map(v => ({
-          id: v.vehicleId, brand: v.brand, fuelType: v.fuelType, vehicleType: v.vehicleType
+          id: v.vehicleId, brand: v.brand, fuelType: v.fuelType, vehicleType: v.vehicleType,
+          modelId: v.modelId, year: v.year
         })));
       }
     } catch (err) {
@@ -36,7 +37,7 @@ export const AppProvider = ({ children }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setUser({ userId: data.userId, name: data.name, email: data.email, isLoggedIn: true });
+        setUser({ userId: data.userId, name: data.name, email: data.email, isAdmin: data.isAdmin === true, isLoggedIn: true });
         showToast(`Welcome back, ${data.name}!`);
         await fetchVehicles(data.userId);
         return true;
@@ -88,13 +89,16 @@ export const AppProvider = ({ children }) => {
           userId: user.userId,
           brand: newVehicle.brand,
           fuelType: newVehicle.fuelType,
-          vehicleType: newVehicle.vehicleType
+          vehicleType: newVehicle.vehicleType,
+          modelId: newVehicle.modelId ?? null,
+          year: newVehicle.year ?? null
         })
       });
       if (res.ok) {
         const saved = await res.json();
         setVehicles(prev => [{
-          id: saved.vehicleId, brand: saved.brand, fuelType: saved.fuelType, vehicleType: saved.vehicleType
+          id: saved.vehicleId, brand: saved.brand, fuelType: saved.fuelType, vehicleType: saved.vehicleType,
+          modelId: saved.modelId, year: saved.year
         }, ...prev]);
         showToast(`Added ${newVehicle.brand} to your garage!`);
       } else {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Building2,
@@ -16,42 +16,108 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-// Initial Dummy Data Sets
-const initialUsers = [
-  { id: 1, name: 'Kasun Perera', email: 'kasun@example.com', role: 'Customer', status: 'Active' },
-  { id: 2, name: 'Mohamed Isfak', email: 'isfak216@gmail.com', role: 'Administrator', status: 'Active' },
-  { id: 3, name: 'Nuwan Bandara', email: 'nuwan.b@gmail.com', role: 'Customer', status: 'Active' },
-  { id: 4, name: 'Dilani Silva', email: 'dilani.silva@yahoo.com', role: 'Customer', status: 'Inactive' },
-  { id: 5, name: 'Test User', email: 'test@test.com', role: 'Customer', status: 'Active' }
-];
+// Maps a backend UserAdminDto → the UI row shape used by this component
+const toUiUser = (dto) => ({
+  id:     dto.userId,
+  name:   dto.name,
+  email:  dto.email,
+  role:   dto.isAdmin ? 'Administrator' : 'Customer',
+  status: 'Active'   // status is not stored in the backend yet; default to Active
+});
 
-const initialGarages = [
-  { id: 1, name: 'Colombo Hybrid Care', location: 'Colombo 03', phone: '+94 11 258 9632', rating: '4.8' },
-  { id: 2, name: 'Kandy Auto Repair Hub', location: 'Kandy City', phone: '+94 81 223 4455', rating: '4.6' },
-  { id: 3, name: 'Southern Express Service', location: 'Galle Road, Kalutara', phone: '+94 34 222 1199', rating: '4.5' },
-  { id: 4, name: 'Negombo EFI Master Tech', location: 'Negombo', phone: '+94 31 223 8844', rating: '4.7' },
-  { id: 5, name: 'Kurunegala Auto Care Center', location: 'Kurunegala', phone: '+94 37 222 7711', rating: '4.4' }
-];
+/** Maps a Garage API response to the UI row shape used by AdminPanel. */
+const toUiGarage = (g) => ({
+  id:       g.garageId,
+  name:     g.garageName    ?? '',
+  location: g.location      ?? '',
+  phone:    g.phoneNo       ?? '',
+  rating:   g.rating != null ? String(g.rating) : ''
+});
 
-const initialBrands = [
-  { id: 1, brand: 'Toyota', models: ['Corolla', 'Aqua', 'Vitz', 'Prius', 'Premio'] },
-  { id: 2, brand: 'Honda', models: ['Civic', 'Vezel', 'Fit', 'Grace', 'CR-V'] },
-  { id: 3, brand: 'Nissan', models: ['Leaf', 'X-Trail', 'Dayz', 'Sunny'] },
-  { id: 4, brand: 'Suzuki', models: ['Alto', 'Wagon R', 'Spacia', 'Swift'] },
-  { id: 5, brand: 'Mitsubishi', models: ['Lancer', 'Montero', 'Outlander'] }
-];
+/**
+ * Merges a flat brands array and a flat models array (both from the API)
+ * into the UI row shape: { id, brand, models: [string] }
+ */
+const toBrandUiList = (apiBrands, apiModels) =>
+  apiBrands.map((b) => ({
+    id:     b.brandId,
+    brand:  b.brandName,
+    models: apiModels
+      .filter((m) => m.brandId === b.brandId)
+      .map((m) => m.modelName)
+  }));
 
 export const AdminPanel = () => {
-  const { showToast } = useApp();
+  const { showToast, user } = useApp();
+
+  // Admin user ID header value, derived from the logged-in user's session
+  const adminId = user?.userId ? String(user.userId) : '';
 
   // Navigation Tab State: 'users' | 'garages' | 'brands'
   const [activeTab, setActiveTab] = useState('users');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Local CRUD state
-  const [users, setUsers] = useState(initialUsers);
-  const [garages, setGarages] = useState(initialGarages);
-  const [brands, setBrands] = useState(initialBrands);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [garages, setGarages] = useState([]);
+  const [garagesLoading, setGaragesLoading] = useState(false);
+  const [brands, setBrands] = useState([]);
+  const [brandsLoading, setBrandsLoading] = useState(false);
+
+  // ── Fetch users from backend on mount ──────────────────────────────────────
+  useEffect(() => {
+    if (!adminId) return;
+    setUsersLoading(true);
+    fetch('http://localhost:8080/api/admin/users', {
+      headers: { 'X-Admin-User-Id': adminId }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => setUsers(data.map(toUiUser)))
+      .catch((err) => {
+        console.error('Failed to load users:', err);
+        showToast?.('Could not load users from server.');
+      })
+      .finally(() => setUsersLoading(false));
+  }, [adminId]); // re-run if the logged-in admin changes
+
+  // ── Fetch garages from backend on mount ───────────────────────────────────
+  useEffect(() => {
+    if (!adminId) return;
+    setGaragesLoading(true);
+    fetch('http://localhost:8080/api/admin/garages', {
+      headers: { 'X-Admin-User-Id': adminId }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => setGarages(data.map(toUiGarage)))
+      .catch((err) => {
+        console.error('Failed to load garages:', err);
+        showToast?.('Could not load garages from server.');
+      })
+      .finally(() => setGaragesLoading(false));
+  }, [adminId]);
+
+  // ── Fetch brands + models from backend on mount ─────────────────────────────
+  useEffect(() => {
+    if (!adminId) return;
+    setBrandsLoading(true);
+    Promise.all([
+      fetch('http://localhost:8080/api/admin/brands', { headers: { 'X-Admin-User-Id': adminId } }).then((r) => r.json()),
+      fetch('http://localhost:8080/api/admin/models',  { headers: { 'X-Admin-User-Id': adminId } }).then((r) => r.json())
+    ])
+      .then(([apiBrands, apiModels]) => setBrands(toBrandUiList(apiBrands, apiModels)))
+      .catch((err) => {
+        console.error('Failed to load brands/models:', err);
+        showToast?.('Could not load brand catalogue from server.');
+      })
+      .finally(() => setBrandsLoading(false));
+  }, [adminId]);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,42 +176,73 @@ export const AdminPanel = () => {
         setUsers([newUser, ...users]);
         showToast?.(`User "${newUser.name}" added successfully!`);
       } else {
-        setUsers(
-          users.map((u) =>
-            u.id === editingItem.id
-              ? { ...u, name: userFormData.name.trim(), email: userFormData.email.trim(), role: userFormData.role, status: userFormData.status }
-              : u
-          )
-        );
-        showToast?.(`User "${userFormData.name}" updated!`);
+        // PUT /api/admin/users/{id} — persist the change server-side
+        const isAdminFlag = userFormData.role === 'Administrator';
+        fetch(`http://localhost:8080/api/admin/users/${editingItem.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-User-Id': adminId
+          },
+          body: JSON.stringify({
+            name:    userFormData.name.trim(),
+            email:   userFormData.email.trim(),
+            isAdmin: isAdminFlag
+          })
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+          .then((updated) => {
+            setUsers((prev) =>
+              prev.map((u) => (u.id === editingItem.id ? { ...toUiUser(updated), status: userFormData.status } : u))
+            );
+            showToast?.(`User "${updated.name}" updated!`);
+          })
+          .catch((err) => {
+            console.error('Failed to update user:', err);
+            showToast?.('Failed to save changes. Please try again.');
+          });
       }
     } else if (activeTab === 'garages') {
       if (!garageFormData.name.trim() || !garageFormData.location.trim()) return;
       if (modalMode === 'add') {
-        const newGarage = {
-          id: garages.length ? Math.max(...garages.map((g) => g.id)) + 1 : 1,
-          name: garageFormData.name.trim(),
-          location: garageFormData.location.trim(),
-          phone: garageFormData.phone.trim() || 'N/A',
-          rating: garageFormData.rating || '4.5'
-        };
-        setGarages([newGarage, ...garages]);
-        showToast?.(`Garage "${newGarage.name}" added successfully!`);
+        // POST /api/admin/garages
+        fetch('http://localhost:8080/api/admin/garages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+          body: JSON.stringify({
+            garageName: garageFormData.name.trim(),
+            location:   garageFormData.location.trim(),
+            phoneNo:    garageFormData.phone.trim() || null,
+            rating:     garageFormData.rating ? Number(garageFormData.rating) : null
+          })
+        })
+          .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+          .then((saved) => {
+            setGarages((prev) => [toUiGarage(saved), ...prev]);
+            showToast?.(`Garage "${saved.garageName}" added successfully!`);
+          })
+          .catch((err) => { console.error('Failed to add garage:', err); showToast?.('Failed to add garage.'); });
       } else {
-        setGarages(
-          garages.map((g) =>
-            g.id === editingItem.id
-              ? {
-                  ...g,
-                  name: garageFormData.name.trim(),
-                  location: garageFormData.location.trim(),
-                  phone: garageFormData.phone.trim() || 'N/A',
-                  rating: garageFormData.rating
-                }
-              : g
-          )
-        );
-        showToast?.(`Garage "${garageFormData.name}" updated!`);
+        // PUT /api/admin/garages/{id}
+        fetch(`http://localhost:8080/api/admin/garages/${editingItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+          body: JSON.stringify({
+            garageName: garageFormData.name.trim(),
+            location:   garageFormData.location.trim(),
+            phoneNo:    garageFormData.phone.trim() || null,
+            rating:     garageFormData.rating ? Number(garageFormData.rating) : null
+          })
+        })
+          .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+          .then((updated) => {
+            setGarages((prev) => prev.map((g) => g.id === editingItem.id ? toUiGarage(updated) : g));
+            showToast?.(`Garage "${updated.garageName}" updated!`);
+          })
+          .catch((err) => { console.error('Failed to update garage:', err); showToast?.('Failed to save changes.'); });
       }
     } else {
       if (!brandFormData.brand.trim()) return;
@@ -155,14 +252,40 @@ export const AdminPanel = () => {
         .filter(Boolean);
 
       if (modalMode === 'add') {
-        const newBrand = {
-          id: brands.length ? Math.max(...brands.map((b) => b.id)) + 1 : 1,
-          brand: brandFormData.brand.trim(),
-          models: modelList.length ? modelList : ['Default']
-        };
-        setBrands([newBrand, ...brands]);
-        showToast?.(`Brand "${newBrand.brand}" added with ${modelList.length} models!`);
+        // POST /api/admin/brands first, then POST each model individually
+        fetch('http://localhost:8080/api/admin/brands', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+          body: JSON.stringify({ brandName: brandFormData.brand.trim() })
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json(); // { brandId, brandName }
+          })
+          .then(async (savedBrand) => {
+            // POST each model name sequentially
+            const savedModelNames = [];
+            for (const modelName of modelList) {
+              const mRes = await fetch('http://localhost:8080/api/admin/models', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+                body: JSON.stringify({ brandId: savedBrand.brandId, modelName })
+              });
+              if (mRes.ok) savedModelNames.push(modelName);
+            }
+            // Add the merged row to local state
+            setBrands((prev) => [
+              { id: savedBrand.brandId, brand: savedBrand.brandName, models: savedModelNames },
+              ...prev
+            ]);
+            showToast?.(`Brand "${savedBrand.brandName}" added with ${savedModelNames.length} models!`);
+          })
+          .catch((err) => {
+            console.error('Failed to add brand:', err);
+            showToast?.('Failed to add brand. Please try again.');
+          });
       } else {
+        // Edit remains local-only (no brand/model PUT endpoints yet)
         setBrands(
           brands.map((b) =>
             b.id === editingItem.id
@@ -194,11 +317,32 @@ export const AdminPanel = () => {
   const confirmDeleteAction = () => {
     const { type, id, name } = deleteConfirm;
     if (type === 'users') {
-      setUsers(users.filter((u) => u.id !== id));
-      showToast?.(`User "${name}" deleted.`);
+      // DELETE /api/admin/users/{id} — remove from the database first
+      fetch(`http://localhost:8080/api/admin/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-User-Id': adminId }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          setUsers((prev) => prev.filter((u) => u.id !== id));
+          showToast?.(`User "${name}" deleted.`);
+        })
+        .catch((err) => {
+          console.error('Failed to delete user:', err);
+          showToast?.('Failed to delete user. Please try again.');
+        });
     } else if (type === 'garages') {
-      setGarages(garages.filter((g) => g.id !== id));
-      showToast?.(`Garage "${name}" removed.`);
+      // DELETE /api/admin/garages/{id}
+      fetch(`http://localhost:8080/api/admin/garages/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-User-Id': adminId }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          setGarages((prev) => prev.filter((g) => g.id !== id));
+          showToast?.(`Garage "${name}" removed.`);
+        })
+        .catch((err) => { console.error('Failed to delete garage:', err); showToast?.('Failed to delete garage.'); });
     } else if (type === 'brands') {
       setBrands(brands.filter((b) => b.id !== id));
       showToast?.(`Brand "${name}" removed.`);
@@ -492,7 +636,13 @@ export const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.length === 0 ? (
+              {usersLoading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    Loading users…
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
                     No users found matching your search.
@@ -579,7 +729,13 @@ export const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredGarages.length === 0 ? (
+              {garagesLoading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    Loading garages…
+                  </td>
+                </tr>
+              ) : filteredGarages.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
                     No garages found matching your search.
@@ -674,7 +830,13 @@ export const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredBrands.length === 0 ? (
+              {brandsLoading ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    Loading brands…
+                  </td>
+                </tr>
+              ) : filteredBrands.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
                     No vehicle brands found matching your search.

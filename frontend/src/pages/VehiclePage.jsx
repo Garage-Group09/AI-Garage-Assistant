@@ -1,35 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Car, PlusCircle, Trash2, Fuel, Shield, Layers, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const VehiclePage = () => {
   const { vehicles, addVehicle, removeVehicle } = useApp();
 
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
-  const [fuelType, setFuelType] = useState('Petrol');
-  const [vehicleType, setVehicleType] = useState('Sedan');
+  // ── Form field state ───────────────────────────────────────────────────────
+  const [selectedBrandId, setSelectedBrandId] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState('');
+  const [year, setYear]                       = useState('');
+  const [fuelType, setFuelType]               = useState('Petrol');
+  const [vehicleType, setVehicleType]         = useState('Sedan');
 
-  const brandModels = {
-    Toyota: ["Corolla", "Aqua", "Vitz"],
-    Honda: ["Civic", "Vezel", "Fit"],
-    Nissan: ["Leaf", "X-Trail"]
+  // ── API-driven brand / model lists ────────────────────────────────────────
+  const [brands, setBrands]           = useState([]);   // [{ brandId, brandName }]
+  const [models, setModels]           = useState([]);   // [{ modelId, brandId, modelName }]
+  const [brandsLoading, setBrandsLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  // Fetch all brands once on mount
+  useEffect(() => {
+    setBrandsLoading(true);
+    fetch('http://localhost:8080/api/brands')
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then(setBrands)
+      .catch((err) => console.error('Failed to fetch brands:', err))
+      .finally(() => setBrandsLoading(false));
+  }, []);
+
+  // Fetch models whenever the selected brand changes
+  useEffect(() => {
+    if (!selectedBrandId) { setModels([]); return; }
+    setSelectedModelId('');
+    setModelsLoading(true);
+    fetch(`http://localhost:8080/api/models/${selectedBrandId}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then(setModels)
+      .catch((err) => console.error('Failed to fetch models:', err))
+      .finally(() => setModelsLoading(false));
+  }, [selectedBrandId]);
+
+  const resetForm = () => {
+    setSelectedBrandId('');
+    setSelectedModelId('');
+    setYear('');
+    setFuelType('Petrol');
+    setVehicleType('Sedan');
+    setModels([]);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!brand || !model) return;
+    if (!selectedBrandId || !selectedModelId) return;
+
+    // Derive the brand name string for the legacy Brand column
+    const brandObj = brands.find((b) => b.brandId === Number(selectedBrandId));
+    const brandName = brandObj ? brandObj.brandName : '';
 
     addVehicle({
-      brand: `${brand} ${model}`,
+      brand:   brandName,
+      modelId: Number(selectedModelId),
+      year:    year ? Number(year) : null,
       fuelType,
       vehicleType
     });
 
-    setBrand('');
-    setModel('');
-    setFuelType('Petrol');
-    setVehicleType('Sedan');
+    resetForm();
   };
 
   const getFuelBadgeClass = (fuel) => {
@@ -68,7 +104,7 @@ export const VehiclePage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="vehicle-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', alignItems: 'end' }}>
-            {/* Brand Dropdown */}
+            {/* Brand Dropdown — populated from GET /api/brands */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="vehicle-brand">
                 Vehicle Brand
@@ -76,18 +112,21 @@ export const VehiclePage = () => {
               <select
                 id="vehicle-brand"
                 className="form-select"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
+                value={selectedBrandId}
+                onChange={(e) => setSelectedBrandId(e.target.value)}
                 required
+                disabled={brandsLoading}
               >
-                <option value="" disabled>Select Brand</option>
-                {Object.keys(brandModels).map(b => (
-                  <option key={b} value={b}>{b}</option>
+                <option value="" disabled>
+                  {brandsLoading ? 'Loading brands…' : 'Select Brand'}
+                </option>
+                {brands.map((b) => (
+                  <option key={b.brandId} value={b.brandId}>{b.brandName}</option>
                 ))}
               </select>
             </div>
 
-            {/* Model Dropdown */}
+            {/* Model Dropdown — populated from GET /api/models/{brandId} */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="vehicle-model">
                 Vehicle Model
@@ -95,20 +134,35 @@ export const VehiclePage = () => {
               <select
                 id="vehicle-model"
                 className="form-select"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
+                value={selectedModelId}
+                onChange={(e) => setSelectedModelId(e.target.value)}
                 required
+                disabled={!selectedBrandId || modelsLoading}
               >
-                <option value="" disabled>Select Model</option>
-                <option value="Corolla">Corolla</option>
-                <option value="Aqua">Aqua</option>
-                <option value="Vitz">Vitz</option>
-                <option value="Civic">Civic</option>
-                <option value="Vezel">Vezel</option>
-                <option value="Fit">Fit</option>
-                <option value="Leaf">Leaf</option>
-                <option value="X-Trail">X-Trail</option>
+                <option value="" disabled>
+                  {!selectedBrandId ? 'Select a brand first' : modelsLoading ? 'Loading models…' : 'Select Model'}
+                </option>
+                {models.map((m) => (
+                  <option key={m.modelId} value={m.modelId}>{m.modelName}</option>
+                ))}
               </select>
+            </div>
+
+            {/* Year Input */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="vehicle-year">
+                Year of Manufacture
+              </label>
+              <input
+                id="vehicle-year"
+                type="number"
+                className="form-input"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="e.g. 2019"
+                min="1980"
+                max={new Date().getFullYear()}
+              />
             </div>
 
             {/* Fuel Type Dropdown */}

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import { Send, Mic, MicOff, Bot, User, MapPin, Sparkles, Languages, Volume2, VolumeX } from 'lucide-react';
 
 /**
@@ -14,6 +15,7 @@ import { Send, Mic, MicOff, Bot, User, MapPin, Sparkles, Languages, Volume2, Vol
  */
 export const DiagnosisPage = () => {
   const navigate = useNavigate();
+  const { user } = useApp();
 
   // Selected language state: 'en' | 'si' | 'ta'
   const [language, setLanguage] = useState('en');
@@ -205,7 +207,8 @@ export const DiagnosisPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessageText,
-          language: language
+          language: language,
+          userId: user?.userId ?? null
         })
       });
 
