@@ -12,12 +12,12 @@ export const Footer = () => {
           <span>AI Garage Assistant</span>
         </div>
        
-        <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem', color: '#187ffd' }}>
-          <span><ShieldCheck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Certified Diagnostics</span>
+        <div className="footer-links" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem', fontSize: '0.85rem', color: '#187ffd', textAlign: 'center' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><ShieldCheck size={14} style={{ flexShrink: 0 }} /> Certified Diagnostics</span>
           <span>• 24/7 Virtual Assistant</span>
           <span>• Sinhala / Tamil / English</span>
         </div>
-        <div style={{ fontSize: '0.8rem', color: '#434445', marginTop: '0.5rem' }}>
+        <div style={{ fontSize: '0.8rem', color: '#434445', marginTop: '0.5rem', textAlign: 'center' }}>
           © {new Date().getFullYear()} AI Garage Assistant. All rights reserved. Designed for optimal performance.
         </div>
       </div>

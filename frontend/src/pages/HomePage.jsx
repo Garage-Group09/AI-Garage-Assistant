@@ -9,6 +9,7 @@ export const HomePage = () => {
     <div className="home-page">
       {/* Hero Section */}
       <section
+        className="home-hero"
         style={{
           background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%)',
           color: 'white',
@@ -46,6 +47,7 @@ export const HomePage = () => {
         <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '900px' }}>
           {/* Top Badge */}
           <div
+            className="home-hero-badge"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -58,15 +60,17 @@ export const HomePage = () => {
               fontSize: '0.9rem',
               fontWeight: 600,
               color: '#ffedd5',
-              marginBottom: '1.8rem'
+              marginBottom: '1.8rem',
+              maxWidth: '100%'
             }}
           >
-            <Sparkles size={16} color="#f97316" />
+            <Sparkles size={16} color="#f97316" style={{ flexShrink: 0 }} />
             <span>Next Gen Multi Lingual AI Garage Platform</span>
           </div>
 
           {/* Main Heading */}
           <h1
+            className="home-hero-title"
             style={{
               fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
               fontWeight: 800,
@@ -87,13 +91,10 @@ export const HomePage = () => {
             </span>
           </h1>
 
-          {/* Welcoming Short Description */}
-         
-
           {/* Large START Button -> Redirects to Login */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <button
-              className="btn btn-primary btn-lg"
+              className="btn btn-primary btn-lg home-hero-btn"
               onClick={() => navigate('/login')}
               style={{
                 boxShadow: '0 10px 25px rgba(249, 115, 22, 0.45)',
@@ -102,12 +103,13 @@ export const HomePage = () => {
               }}
             >
               <span>Start Diagnostic Assistant</span>
-              <ArrowRight size={22} />
+              <ArrowRight size={22} style={{ flexShrink: 0 }} />
             </button>
           </div>
 
           {/* Feature Highlights Pill Bar */}
           <div
+            className="home-highlights-grid"
             style={{
               marginTop: '3.5rem',
               display: 'grid',
@@ -118,21 +120,21 @@ export const HomePage = () => {
           >
             <div style={{ background: 'rgba(255,255,255,0.07)', padding: '1rem 1.2rem', borderRadius: '12px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ color: '#f97316', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Mic size={18} /> Voice & Text Input
+                <Mic size={18} style={{ flexShrink: 0 }} /> Voice & Text Input
               </div>
               <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>English, සිංහල, தமிழ் voice diagnosis</p>
             </div>
 
             <div style={{ background: 'rgba(255,255,255,0.07)', padding: '1rem 1.2rem', borderRadius: '12px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ color: '#60a5fa', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Car size={18} /> Garage Database
+                <Car size={18} style={{ flexShrink: 0 }} /> Garage Database
               </div>
               <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>Store vehicle specs & maintenance history</p>
             </div>
 
             <div style={{ background: 'rgba(255,255,255,0.07)', padding: '1rem 1.2rem', borderRadius: '12px', backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ color: '#4ade80', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MapPin size={18} />  Garage Finder
+                <MapPin size={18} style={{ flexShrink: 0 }} />  Garage Finder
               </div>
               <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>Find and navigate to nearby garages</p>
             </div>
@@ -140,12 +142,12 @@ export const HomePage = () => {
         </div>
       </section>
       {/* Features Overview Grid */}
-      <section className="container" style={{ padding: '5rem 1.5rem' }}>
+      <section className="container home-features-section" style={{ padding: '5rem 1.5rem' }}>
         <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3.5rem auto' }}>
           <span style={{ color: 'var(--accent-orange)', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Comprehensive Auto Assistant
           </span>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--primary-blue)' }}>
+          <h2 className="home-features-title" style={{ fontSize: '2.2rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--primary-blue)' }}>
             Everything You Need for Vehicle Troubleshooting
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginTop: '0.6rem' }}>
@@ -153,7 +155,7 @@ export const HomePage = () => {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+        <div className="home-features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           {/* Card 1 */}
           <div className="card card-hover">
             <div style={{ width: '50px', height: '50px', background: 'var(--primary-blue-light)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-blue-mid)', marginBottom: '1.2rem' }}>

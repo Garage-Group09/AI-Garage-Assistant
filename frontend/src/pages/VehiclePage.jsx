@@ -83,14 +83,14 @@ export const VehiclePage = () => {
       {/* Page Header */}
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.4rem' }}>
-          <div style={{ padding: '0.5rem', background: 'var(--primary-blue-light)', borderRadius: '10px', color: 'var(--primary-blue)' }}>
+          <div style={{ padding: '0.5rem', background: 'var(--primary-blue-light)', borderRadius: '10px', color: 'var(--primary-blue)', flexShrink: 0 }}>
             <Car size={26} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
+          <h1 className="vehicle-page-title" style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
             Vehicle Information
           </h1>
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginLeft: '3.2rem' }}>
+        <p className="vehicle-page-desc" style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginLeft: '3.2rem' }}>
           Add and manage your vehicles to receive tailored AI diagnostics and maintenance tips.
         </p>
       </div>
@@ -219,7 +219,7 @@ export const VehiclePage = () => {
 
         {/* Vehicles Table Card */}
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+          <div className="vehicle-table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary-blue)' }}>
               Registered Vehicles ({vehicles.length})
             </h2>
@@ -242,7 +242,7 @@ export const VehiclePage = () => {
                     <th>Vehicle Brand & Model</th>
                     <th>Fuel Type</th>
                     <th>Vehicle Type</th>
-                    <th style={{ textAlign: 'center', width: '100px' }}>Action</th>
+                    <th style={{ textAlign: 'center', width: '100px', whiteSpace: 'nowrap' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>

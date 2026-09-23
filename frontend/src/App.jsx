@@ -26,8 +26,8 @@ const ToastNotification = () => {
   return (
     <div className="toast-container">
       <div className="toast">
-        <CheckCircle size={20} color="var(--accent-orange)" />
-        <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{toastMessage}</span>
+        <CheckCircle size={20} color="var(--accent-orange)" style={{ flexShrink: 0 }} />
+        <span style={{ fontWeight: 600, fontSize: '0.92rem', minWidth: 0, wordBreak: 'break-word' }}>{toastMessage}</span>
       </div>
     </div>
   );

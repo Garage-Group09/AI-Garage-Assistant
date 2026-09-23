@@ -366,7 +366,7 @@ export const AdminPanel = () => {
   );
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem', maxWidth: '1240px' }}>
+    <div className="container admin-container" style={{ padding: '2.5rem 1.5rem', maxWidth: '1240px' }}>
       {/* Top Banner Header */}
       <div
         style={{
@@ -378,7 +378,7 @@ export const AdminPanel = () => {
           marginBottom: '2rem'
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div
             style={{
               display: 'inline-flex',
@@ -393,9 +393,9 @@ export const AdminPanel = () => {
               marginBottom: '0.6rem'
             }}
           >
-            <Shield size={14} /> Administration Console
+            <Shield size={14} style={{ flexShrink: 0 }} /> Administration Console
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
+          <h1 className="admin-page-title" style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
             AI Garage Management
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.96rem', marginTop: '0.2rem' }}>
@@ -404,8 +404,9 @@ export const AdminPanel = () => {
         </div>
 
         {/* Global Summary Statistics */}
-        <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+        <div className="admin-stats-row" style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
           <div
+            className="admin-stat-card"
             style={{
               background: 'white',
               border: '1px solid var(--border-color)',
@@ -422,6 +423,7 @@ export const AdminPanel = () => {
             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Users</div>
           </div>
           <div
+            className="admin-stat-card"
             style={{
               background: 'white',
               border: '1px solid var(--border-color)',
@@ -438,6 +440,7 @@ export const AdminPanel = () => {
             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Garages</div>
           </div>
           <div
+            className="admin-stat-card"
             style={{
               background: 'white',
               border: '1px solid var(--border-color)',
@@ -458,7 +461,7 @@ export const AdminPanel = () => {
 
       {/* Tabs Bar & Controls */}
       <div
-        className="card"
+        className="card admin-controls-card"
         style={{
           padding: '1.2rem 1.5rem',
           marginBottom: '1.5rem',
@@ -470,7 +473,7 @@ export const AdminPanel = () => {
         }}
       >
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="admin-tabs-nav" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => {
               setActiveTab('users');
@@ -491,7 +494,7 @@ export const AdminPanel = () => {
               color: activeTab === 'users' ? 'white' : 'var(--text-secondary)'
             }}
           >
-            <Users size={17} />
+            <Users size={17} style={{ flexShrink: 0 }} />
             <span>Users</span>
             <span
               style={{
@@ -500,7 +503,8 @@ export const AdminPanel = () => {
                 fontSize: '0.75rem',
                 padding: '0.15rem 0.55rem',
                 borderRadius: '999px',
-                fontWeight: 700
+                fontWeight: 700,
+                flexShrink: 0
               }}
             >
               {users.length}
@@ -527,7 +531,7 @@ export const AdminPanel = () => {
               color: activeTab === 'garages' ? 'white' : 'var(--text-secondary)'
             }}
           >
-            <Building2 size={17} />
+            <Building2 size={17} style={{ flexShrink: 0 }} />
             <span>Garages</span>
             <span
               style={{
@@ -536,7 +540,8 @@ export const AdminPanel = () => {
                 fontSize: '0.75rem',
                 padding: '0.15rem 0.55rem',
                 borderRadius: '999px',
-                fontWeight: 700
+                fontWeight: 700,
+                flexShrink: 0
               }}
             >
               {garages.length}
@@ -563,7 +568,7 @@ export const AdminPanel = () => {
               color: activeTab === 'brands' ? 'white' : 'var(--text-secondary)'
             }}
           >
-            <Car size={17} />
+            <Car size={17} style={{ flexShrink: 0 }} />
             <span>Brand/Model Management</span>
             <span
               style={{
@@ -572,7 +577,8 @@ export const AdminPanel = () => {
                 fontSize: '0.75rem',
                 padding: '0.15rem 0.55rem',
                 borderRadius: '999px',
-                fontWeight: 700
+                fontWeight: 700,
+                flexShrink: 0
               }}
             >
               {brands.length}
@@ -581,8 +587,8 @@ export const AdminPanel = () => {
         </div>
 
         {/* Right Search and Add Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: '220px' }}>
+        <div className="admin-controls-right" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+          <div className="admin-search-wrapper" style={{ position: 'relative', width: '220px' }}>
             <Search
               size={16}
               style={{
@@ -610,10 +616,10 @@ export const AdminPanel = () => {
 
           <button
             onClick={handleOpenAdd}
-            className="btn btn-primary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}
+            className="btn btn-primary btn-sm admin-add-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}
           >
-            <Plus size={16} />
+            <Plus size={16} style={{ flexShrink: 0 }} />
             <span>
               {activeTab === 'users' ? 'Add User' : activeTab === 'garages' ? 'Add Garage' : 'Add Brand'}
             </span>
@@ -936,7 +942,7 @@ export const AdminPanel = () => {
           }}
         >
           <div
-            className="card"
+            className="card admin-modal-card"
             style={{
               width: '100%',
               maxWidth: '500px',
@@ -999,7 +1005,7 @@ export const AdminPanel = () => {
                       required
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="modal-form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="form-group">
                       <label className="form-label">Role</label>
                       <select
@@ -1052,7 +1058,7 @@ export const AdminPanel = () => {
                       required
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="modal-form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="form-group">
                       <label className="form-label">Phone Number</label>
                       <input
@@ -1149,7 +1155,7 @@ export const AdminPanel = () => {
           }}
         >
           <div
-            className="card"
+            className="card admin-delete-modal-card"
             style={{
               width: '100%',
               maxWidth: '420px',

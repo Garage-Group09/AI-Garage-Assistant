@@ -19,6 +19,7 @@ export const LoginPage = () => {
 
   return (
     <div
+      className="auth-page-wrapper"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -47,7 +48,7 @@ export const LoginPage = () => {
           >
             <Wrench size={28} />
           </div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
+          <h2 className="auth-title" style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
             Welcome Back
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -56,7 +57,7 @@ export const LoginPage = () => {
         </div>
 
         {/* Styled Card with shadow and rounded corners */}
-        <div className="card" style={{ padding: '2.2rem 2rem', border: '1px solid #e2e8f0' }}>
+        <div className="card auth-card" style={{ padding: '2.2rem 2rem', border: '1px solid #e2e8f0' }}>
           <form onSubmit={handleSubmit}>
             {/* Email Field */}
             <div className="form-group">

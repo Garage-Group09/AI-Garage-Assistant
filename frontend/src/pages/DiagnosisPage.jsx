@@ -31,19 +31,7 @@ export const DiagnosisPage = () => {
     {
       id: 1,
       sender: 'ai',
-      text: 'Hello! I am your AI Garage Assistant. How can I help diagnose your vehicle today?',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    },
-    {
-      id: 2,
-      sender: 'ai',
-      text: 'Please describe symptoms like engine knocking, brake noise, or warning lights.',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    },
-    {
-      id: 3,
-      sender: 'ai',
-      text: "For example: 'My car makes a rattling sound when I accelerate'.",
+      text: "Hi! Describe your vehicle's symptom below — for example, engine knocking, brake noise, or a warning light — and I'll help figure out what's going on.",
       suggestion: 'My car makes a rattling sound when I accelerate',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -261,7 +249,7 @@ export const DiagnosisPage = () => {
     <div className="container" style={{ maxWidth: '1000px' }}>
       
       {/* Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="diagnosis-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Sparkles color="var(--accent-orange)" size={24} />
@@ -326,15 +314,15 @@ export const DiagnosisPage = () => {
             justifyContent: 'space-between'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{ width: '40px', height: '40px', background: 'var(--accent-orange)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Bot size={22} color="white" />
               </div>
               <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', background: '#22c55e', borderRadius: '50%', border: '2px solid white' }} />
             </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>AI Garage Diagnostic Assistant</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>AI Garage Diagnostic Assistant</div>
               <div style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>Online • Multi-lingual Vehicle Care</div>
             </div>
           </div>
@@ -503,7 +491,7 @@ export const DiagnosisPage = () => {
           {/* Microphone Button (SpeechRecognition API) */}
           <button
             type="button"
-            className={`btn btn-sm ${isRecording ? 'mic-recording' : ''}`}
+            className={`btn btn-sm diagnosis-input-btn ${isRecording ? 'mic-recording' : ''}`}
             onClick={toggleSpeechRecognition}
             style={{
               background: isRecording ? '#ef4444' : '#fff7ed',
@@ -540,7 +528,7 @@ export const DiagnosisPage = () => {
           {/* Send Button */}
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary diagnosis-input-btn"
             disabled={isSubmitting || !inputText.trim()}
             style={{ borderRadius: '50%', width: '46px', height: '46px', padding: 0, flexShrink: 0 }}
           >

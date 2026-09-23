@@ -39,6 +39,7 @@ export const RegisterPage = () => {
 
   return (
     <div
+      className="auth-page-wrapper"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -63,7 +64,7 @@ export const RegisterPage = () => {
               textDecoration: 'none'
             }}
           >
-            <ArrowLeft size={16} /> Back to Login
+            <ArrowLeft size={16} style={{ flexShrink: 0 }} /> Back to Login
           </Link>
         </div>
 
@@ -85,7 +86,7 @@ export const RegisterPage = () => {
           >
             <UserPlus size={28} />
           </div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
+          <h2 className="auth-title" style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
             Create New Account
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -94,7 +95,7 @@ export const RegisterPage = () => {
         </div>
 
         {/* Styled Card Layout */}
-        <div className="card" style={{ padding: '2.2rem 2rem', border: '1px solid #e2e8f0' }}>
+        <div className="card auth-card" style={{ padding: '2.2rem 2rem', border: '1px solid #e2e8f0' }}>
           <form onSubmit={handleSubmit}>
             {/* Full Name Field */}
             <div className="form-group">
@@ -222,7 +223,7 @@ export const RegisterPage = () => {
               </div>
               {confirmPassword && password !== confirmPassword && (
                 <p style={{ color: '#dc2626', fontSize: '0.82rem', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <AlertCircle size={14} /> Passwords do not match
+                  <AlertCircle size={14} style={{ flexShrink: 0 }} /> Passwords do not match
                 </p>
               )}
             </div>
@@ -264,10 +265,10 @@ export const RegisterPage = () => {
           <div style={{ marginTop: '1.6rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle2 size={16} color="#16a34a" /> Instant access to Sinhala & Tamil voice diagnosis
+                <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0 }} /> Instant access to Sinhala & Tamil voice diagnosis
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle2 size={16} color="#16a34a" /> Save unlimited vehicles to your garage
+                <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0 }} /> Save unlimited vehicles to your garage
               </div>
             </div>
           </div>

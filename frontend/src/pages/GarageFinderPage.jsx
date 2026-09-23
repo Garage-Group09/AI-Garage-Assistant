@@ -158,6 +158,7 @@ export const GarageFinderPage = () => {
       
       {/* Page Header Banner */}
       <div
+        className="garage-finder-header"
         style={{
           background: 'linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)',
           color: 'white',
@@ -172,10 +173,10 @@ export const GarageFinderPage = () => {
           gap: '1rem'
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <h1 style={{ fontSize: '1.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <MapPin size={28} color="#f97316" />
-            Garage Finder & Auto Workshops
+            <MapPin size={28} color="#f97316" style={{ flexShrink: 0 }} />
+            <span>Garage Finder & Auto Workshops</span>
           </h1>
           <p style={{ color: '#cbd5e1', fontSize: '0.98rem', marginTop: '0.3rem' }}>
             Discover top-rated auto repair shops, mechanics & 24/7 breakdown assistance
@@ -184,12 +185,12 @@ export const GarageFinderPage = () => {
 
         {/* GPS Locate Me Button */}
         <button
-          className="btn btn-primary"
+          className="btn btn-primary garage-locate-btn"
           onClick={handleDetectLocation}
           disabled={isLocating}
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px' }}
         >
-          <Navigation size={18} className={isLocating ? 'spin' : ''} />
+          <Navigation size={18} className={isLocating ? 'spin' : ''} style={{ flexShrink: 0 }} />
           <span>{isLocating ? 'Locating...' : 'Locate Me'}</span>
         </button>
       </div>
@@ -201,7 +202,7 @@ export const GarageFinderPage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           
           <div
-            className="card"
+            className="card garage-map-card"
             style={{
               padding: 0,
               overflow: 'hidden',
@@ -256,7 +257,7 @@ export const GarageFinderPage = () => {
           {/* Active Selected Workshop Card */}
           {selectedGarage && (
             <div
-              className="card"
+              className="card garage-selected-card"
               style={{
                 borderRadius: '20px',
                 borderLeft: '5px solid #f97316',
@@ -266,11 +267,11 @@ export const GarageFinderPage = () => {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-                <div>
+                <div style={{ minWidth: 0, flex: '1 1 auto' }}>
                   <span className="badge badge-orange" style={{ marginBottom: '0.4rem' }}>
                     Selected Workshop
                   </span>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e3a8a' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e3a8a', wordBreak: 'break-word' }}>
                     {selectedGarage.name}
                   </h3>
                   <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
@@ -280,10 +281,10 @@ export const GarageFinderPage = () => {
 
                 <a
                   href={`tel:${selectedGarage.phoneRaw}`}
-                  className="btn btn-primary btn-sm"
-                  style={{ textDecoration: 'none', gap: '0.4rem', borderRadius: '12px' }}
+                  className="btn btn-primary btn-sm garage-call-btn"
+                  style={{ textDecoration: 'none', gap: '0.4rem', borderRadius: '12px', flexShrink: 0 }}
                 >
-                  <Phone size={16} /> Call Garage
+                  <Phone size={16} style={{ flexShrink: 0 }} /> <span>Call Garage</span>
                 </a>
               </div>
             </div>
@@ -292,7 +293,7 @@ export const GarageFinderPage = () => {
         </div>
 
         {/* Right Side: Demo Garage Cards List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', minWidth: 0 }}>
           
           {/* Search Bar */}
           <div style={{ position: 'relative' }}>
@@ -320,7 +321,7 @@ export const GarageFinderPage = () => {
               return (
                 <div
                   key={garage.id}
-                  className="card card-hover"
+                  className="card card-hover garage-item-card"
                   onClick={() => setSelectedGarage(garage)}
                   style={{
                     padding: '1.4rem',
@@ -334,8 +335,8 @@ export const GarageFinderPage = () => {
                 >
                   {/* Garage Name & Distance */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e3a8a', lineHeight: 1.3 }}>
+                    <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e3a8a', lineHeight: 1.3, wordBreak: 'break-word' }}>
                         {garage.name}
                       </h3>
                       <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -343,21 +344,21 @@ export const GarageFinderPage = () => {
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f97316', background: '#ffedd5', padding: '0.25rem 0.65rem', borderRadius: '20px', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f97316', background: '#ffedd5', padding: '0.25rem 0.65rem', borderRadius: '20px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {garage.distance}
                     </span>
                   </div>
 
                   {/* Rating Stars & Review Count */}
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', fontSize: '0.88rem', margin: '0.6rem 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#b45309', fontWeight: 700, background: '#fef3c7', padding: '0.2rem 0.6rem', borderRadius: '8px' }}>
-                      <Star size={15} fill="#f59e0b" color="#f59e0b" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#b45309', fontWeight: 700, background: '#fef3c7', padding: '0.2rem 0.6rem', borderRadius: '8px', flexShrink: 0 }}>
+                      <Star size={15} fill="#f59e0b" color="#f59e0b" style={{ flexShrink: 0 }} />
                       <span>{garage.rating.toFixed(1)}</span>
                       <span style={{ fontWeight: 500, color: '#78350f', fontSize: '0.8rem' }}>({garage.reviews} reviews)</span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#16a34a', fontWeight: 600, fontSize: '0.8rem' }}>
-                      <Clock size={14} />
+                      <Clock size={14} style={{ flexShrink: 0 }} />
                       <span>{garage.openStatus}</span>
                     </div>
                   </div>
@@ -366,7 +367,7 @@ export const GarageFinderPage = () => {
                   <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                       <MapPin size={15} color="#2563eb" style={{ flexShrink: 0 }} />
-                      <span>{garage.address}</span>
+                      <span style={{ minWidth: 0, wordBreak: 'break-word' }}>{garage.address}</span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -399,7 +400,7 @@ export const GarageFinderPage = () => {
                           gap: '0.25rem'
                         }}
                       >
-                        <CheckCircle2 size={12} color="#f97316" />
+                        <CheckCircle2 size={12} color="#f97316" style={{ flexShrink: 0 }} />
                         {service}
                       </span>
                     ))}
@@ -410,9 +411,9 @@ export const GarageFinderPage = () => {
                     <a
                       href={`tel:${garage.phoneRaw}`}
                       className="btn btn-sm btn-primary"
-                      style={{ flex: 1, textDecoration: 'none', gap: '0.45rem', borderRadius: '12px' }}
+                      style={{ flex: 1, minWidth: 0, textDecoration: 'none', gap: '0.45rem', borderRadius: '12px', justifyContent: 'center' }}
                     >
-                      <Phone size={15} />
+                      <Phone size={15} style={{ flexShrink: 0 }} />
                       <span>Call Garage</span>
                     </a>
 
@@ -420,9 +421,9 @@ export const GarageFinderPage = () => {
                       type="button"
                       className="btn btn-sm btn-outline"
                       onClick={(e) => handleShareGarage(garage, e)}
-                      style={{ flex: 1, gap: '0.45rem', borderRadius: '12px' }}
+                      style={{ flex: 1, minWidth: 0, gap: '0.45rem', borderRadius: '12px', justifyContent: 'center' }}
                     >
-                      <Share2 size={15} />
+                      <Share2 size={15} style={{ flexShrink: 0 }} />
                       <span>Share</span>
                     </button>
                   </div>

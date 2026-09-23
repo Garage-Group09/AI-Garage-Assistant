@@ -80,6 +80,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
+  /* position:relative ensures the absolute mobile dropdown always anchors to this bar */
+  position: sticky;
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -475,21 +477,62 @@ body {
 
 /* Responsive Breakpoints */
 @media (max-width: 900px) {
+  /* Prevent horizontal scrollbars globally */
+  html, body, .app-container {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .container {
+    padding: 1.25rem 1rem !important;
+    max-width: 100% !important;
+  }
+
+  .card {
+    padding: 1.25rem !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Navbar */
   .navbar-container {
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .navbar-logo {
+    font-size: 1.15rem !important;
+    gap: 0.5rem !important;
+    min-width: 0 !important;
+  }
+
+  .logo-icon {
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .navbar-actions {
+    gap: 0.4rem !important;
+    flex-shrink: 0 !important;
   }
 
   .mobile-toggle {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
+    padding: 0.35rem !important;
+    flex-shrink: 0 !important;
   }
 
   .navbar-username {
-    display: none;
+    display: none !important;
   }
 
-  /* Navbar items stack vertically on small screens */
+  .navbar-user-chip {
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  /* Navbar items stack vertically in mobile dropdown */
   .nav-menu {
     position: absolute;
     top: 100%;
@@ -507,7 +550,7 @@ body {
   }
 
   .nav-menu.open {
-    display: flex;
+    display: flex !important;
   }
 
   .nav-link {
@@ -528,24 +571,114 @@ body {
     display: none;
   }
 
-  /* Buttons resize to full width on mobile (excluding circular chat buttons) */
-  .btn:not(.btn-sm):not(.nav-link),
-  form:not(.diagnosis-input-form) .btn,
+  /* Buttons resize to full width on mobile (excluding circular/icon/table buttons) */
+  .btn:not(.btn-sm):not(.nav-link):not(.diagnosis-input-btn),
+  form:not(.diagnosis-input-form) .btn:not(.btn-sm):not(.diagnosis-input-btn),
   .vehicle-form-grid button[type="submit"],
   .vehicle-form-grid .btn {
     width: 100% !important;
     justify-content: center !important;
   }
 
-  .container {
-    padding: 1.25rem 1rem;
+  /* Footer */
+  .footer {
+    padding: 1.75rem 1rem 1.25rem 1rem !important;
   }
 
-  .card {
-    padding: 1.25rem;
+  .footer-container {
+    gap: 0.75rem !important;
   }
 
-  /* Vehicle Form on Mobile View */
+  .footer-links {
+    gap: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Toast Notification */
+  .toast-container {
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 1rem !important;
+  }
+
+  .toast {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.88rem !important;
+  }
+
+  /* Home Page */
+  .home-hero {
+    padding: 3rem 1rem 3.5rem 1rem !important;
+  }
+
+  .home-hero-badge {
+    padding: 0.35rem 0.9rem !important;
+    font-size: 0.82rem !important;
+    margin-bottom: 1.25rem !important;
+    max-width: 100% !important;
+    text-align: center;
+  }
+
+  .home-hero-title {
+    font-size: 1.85rem !important;
+    line-height: 1.22 !important;
+    margin-bottom: 1.1rem !important;
+    letter-spacing: -0.5px !important;
+  }
+
+  .home-hero-btn {
+    padding: 0.85rem 1.4rem !important;
+    font-size: 1.05rem !important;
+    width: 100% !important;
+  }
+
+  .home-highlights-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+    margin-top: 2.2rem !important;
+  }
+
+  .home-features-section {
+    padding: 2.5rem 1rem !important;
+  }
+
+  .home-features-title {
+    font-size: 1.5rem !important;
+  }
+
+  .home-features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.2rem !important;
+  }
+
+  /* Login & Register Pages */
+  .auth-page-wrapper {
+    padding: 1.5rem 0.75rem !important;
+    min-height: auto !important;
+  }
+
+  .auth-card {
+    padding: 1.35rem 1.1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .auth-title {
+    font-size: 1.5rem !important;
+  }
+
+  /* Vehicle Page */
+  .vehicle-page-title {
+    font-size: 1.45rem !important;
+  }
+
+  .vehicle-page-desc {
+    margin-left: 0 !important;
+    margin-top: 0.4rem !important;
+    font-size: 0.9rem !important;
+  }
+
   .vehicle-form-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
@@ -555,32 +688,208 @@ body {
     margin-bottom: 0.3rem !important;
   }
 
+  .vehicle-table-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.3rem !important;
+  }
+
   /* Diagnosis Chat Box on Mobile View */
   .diagnosis-chat-card {
-    height: calc(100vh - 200px) !important;
-    min-height: 480px;
+    height: calc(100vh - 260px) !important;
+    min-height: 420px;
     border-radius: var(--radius-md) !important;
   }
 
   .diagnosis-messages-container {
-    padding: 1rem !important;
-    gap: 0.9rem !important;
+    padding: 0.85rem !important;
+    gap: 0.85rem !important;
   }
 
   .diagnosis-bubble {
-    max-width: 88% !important;
+    max-width: 90% !important;
     font-size: 0.9rem !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.7rem 0.9rem !important;
   }
 
   .diagnosis-input-form {
-    padding: 0.75rem 0.9rem !important;
-    gap: 0.5rem !important;
+    padding: 0.65rem 0.75rem !important;
+    gap: 0.45rem !important;
   }
 
   .diagnosis-input-form .form-input {
     font-size: 0.88rem !important;
-    padding: 0.65rem 0.9rem !important;
+    padding: 0.6rem 0.85rem !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .diagnosis-input-form .btn {
+    width: 42px !important;
+    height: 42px !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+  }
+
+  .diagnosis-chat-header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .diagnosis-page-header {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  .diagnosis-page-header > div:first-child {
+    min-width: 0;
+    flex: 1 1 200px;
+  }
+
+  .diagnosis-page-header > div:first-child h1 {
+    font-size: 1.35rem !important;
+    white-space: normal;
+  }
+
+  .diagnosis-page-header > div:last-child {
+    flex-shrink: 0;
+  }
+
+  /* Garage Finder Page */
+  .garage-finder-header {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .garage-finder-header h1 {
+    font-size: 1.35rem !important;
+  }
+
+  .garage-locate-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .garage-map-card {
+    height: 320px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .garage-finder-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.2rem !important;
+  }
+
+  .garage-selected-card {
+    padding: 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .garage-selected-card .garage-call-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .garage-item-card {
+    padding: 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Admin Panel */
+  .admin-container {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .admin-page-title {
+    font-size: 1.45rem !important;
+  }
+
+  .admin-stats-row {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+  }
+
+  .admin-stat-card {
+    flex: 1 1 calc(33.333% - 0.4rem) !important;
+    min-width: 80px !important;
+    padding: 0.6rem 0.4rem !important;
+  }
+
+  .admin-stat-card > div:first-child {
+    font-size: 1.2rem !important;
+  }
+
+  .admin-stat-card > div:last-child {
+    font-size: 0.72rem !important;
+  }
+
+  .admin-controls-card {
+    padding: 1rem !important;
+    border-radius: var(--radius-md) !important;
+    gap: 0.8rem !important;
+  }
+
+  .admin-tabs-nav {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.4rem !important;
+  }
+
+  .admin-tabs-nav button {
+    flex: 1 1 auto !important;
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.82rem !important;
+    justify-content: center !important;
+  }
+
+  .admin-controls-right {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+    justify-content: space-between !important;
+  }
+
+  .admin-search-wrapper {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .admin-add-btn {
+    flex-shrink: 0 !important;
+    width: auto !important;
+  }
+
+  .modal-form-grid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .admin-modal-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+    max-width: 100% !important;
+  }
+
+  .admin-delete-modal-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Tables & Scroll Containers */
+  .table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: 0.7rem 0.8rem !important;
+    font-size: 0.85rem !important;
   }
 }
 
@@ -590,12 +899,6 @@ body {
   grid-template-columns: minmax(320px, 1fr) minmax(320px, 440px);
   gap: 1.8rem;
   align-items: start;
-}
-
-@media (max-width: 900px) {
-  .garage-finder-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Spin animation for GPS locating button */

@@ -49,17 +49,20 @@ public class GroqService {
             languageName = "English";
         }
 
-        String systemPrompt = "You are an AI vehicle diagnostic assistant inside a garage-finder app. "
+        String systemPrompt = "You are an AI vehicle diagnostic assistant. "
                 + "A driver will describe a vehicle symptom. Respond ONLY in " + languageName + ". "
-                + "In 2-4 short sentences: state the most likely cause, mention whether it is safe to keep driving, "
-                + "and recommend visiting a certified garage if the issue sounds serious. "
-                + "Do not quote exact repair costs. Keep it beginner-friendly, no jargon dump."
+                + "Do NOT give a final diagnosis on the very first message unless the user's description is already very detailed "
+                + "(mentions the specific sound, when it happens, and how long it's been occurring). "
+                + "Instead, ask 1-2 short, relevant clarifying questions first (e.g. when does it happen, "
+                + "how long has this occurred, any other symptoms) to narrow down the cause. "
+                + "Only after the user has answered at least one clarifying question "
+                + "(check the conversation history for prior back-and-forth on this same issue), "
+                + "give a final diagnosis: state the most likely cause, mention whether it is safe to keep driving, "
+                + "and recommend visiting a certified garage if serious. "
+                + "Do not quote exact repair costs. Keep responses to 1-3 short sentences, beginner-friendly, no jargon."
                 + " Based on a preliminary classifier, this issue is likely related to: "
                 + predictedCategory.replace("_", " ")
-                + ". Use this as a hint but rely on your own reasoning about the actual symptom described."
-                + " If the conversation history includes earlier symptoms from the same user, consider whether"
-                + " this message is a follow-up or a new issue, and ask a brief clarifying question if the"
-                + " message alone is ambiguous.";
+                + ". Use this as a hint but rely on your own reasoning about the actual symptom described.";
 
         // Build JSON request body
         ObjectNode root = objectMapper.createObjectNode();
