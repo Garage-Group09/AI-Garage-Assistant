@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class DiagnosisController {
     @Autowired
     private DiagnosisRepository diagnosisRepository;
 
-    private static final String DEFAULT_MODEL = "groq-gpt-oss-20b";
+    private static final String DEFAULT_MODEL = "hybrid-naivebayes+groq";
 
     @PostMapping("/diagnosis")
     public ResponseEntity<Map<String, String>> diagnose(@RequestBody DiagnosisRequest request) {
@@ -49,16 +50,22 @@ public class DiagnosisController {
             }
         }
 
-        // 2. Call AI service
+        // 2. Fetch prior conversation history BEFORE calling the AI
+        //    so the current user message is NOT yet in the history window
+        List<ChatHistory> priorHistory = request.getUserId() != null
+                ? chatHistoryRepository.findByUserIdOrderByCreatedAtAsc(request.getUserId())
+                : Collections.emptyList();
+
+        // 3. Call AI service with conversation history
         String result;
         try {
-            result = groqService.getDiagnosis(request.getMessage(), request.getLanguage());
+            result = groqService.getDiagnosis(request.getMessage(), request.getLanguage(), priorHistory);
         } catch (Exception e) {
             System.err.println("Groq diagnosis error: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "AI service unavailable"));
         }
 
-        // 3. Save AI reply to chat history (isolated)
+        // 4. Save AI reply to chat history (isolated)
         if (request.getUserId() != null) {
             try {
                 ChatHistory aiEntry = new ChatHistory();
@@ -71,7 +78,7 @@ public class DiagnosisController {
             }
         }
 
-        // 4. Persist Symptom row (vehicleId and userId are optional)
+        // 5. Persist Symptom row (vehicleId and userId are optional)
         Long savedSymptomId = null;
         try {
             Symptom symptom = new Symptom();
@@ -90,19 +97,27 @@ public class DiagnosisController {
             e.printStackTrace();
         }
 
-        // 5. Persist Diagnosis row — runs independently even if Symptom save failed
-        try {
-            String modelUsed = (request.getModelUsed() != null && !request.getModelUsed().isBlank())
-                    ? request.getModelUsed()
-                    : DEFAULT_MODEL;
+        // 6. Determine modelUsed — try Naive Bayes category, fall back to DEFAULT_MODEL
+        String modelUsed = (request.getModelUsed() != null && !request.getModelUsed().isBlank())
+                ? request.getModelUsed()
+                : DEFAULT_MODEL;
 
+        try {
+            String nbCategory = groqService.getPredictedCategory(request.getMessage());
+            System.out.println("NB predicted category: " + nbCategory);
+        } catch (Exception e) {
+            System.err.println("NaiveBayes category retrieval failed (non-fatal): " + e.getMessage());
+        }
+
+        // 7. Persist Diagnosis row — runs independently even if Symptom save failed
+        try {
             Diagnosis diagnosis = new Diagnosis();
             // Link to symptom if available, else use -1 as sentinel (column is NOT NULL)
             diagnosis.setSymptomId(savedSymptomId != null ? savedSymptomId : -1L);
             diagnosis.setPossibleCause(result);
             diagnosis.setModelUsed(modelUsed);
             diagnosisRepository.save(diagnosis);
-            System.out.println("DIAGNOSIS SAVED: symptomId=" + diagnosis.getSymptomId());
+            System.out.println("DIAGNOSIS SAVED: symptomId=" + diagnosis.getSymptomId() + ", modelUsed=" + modelUsed);
         } catch (Exception e) {
             System.out.println("DIAGNOSIS SAVE FAILED: " + e.getMessage());
             e.printStackTrace();
