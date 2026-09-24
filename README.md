@@ -1,165 +1,350 @@
-# Smart Garage.AI — AI Garage Assistant
+<div align="center">
 
-Local academic prototype for vehicle symptom assessment, reviewed Naive Bayes training, approximate repair costs, and nearby workshop browsing. React + Spring Boot + XAMPP MySQL/MariaDB. No hosted service is included.
+# Smart Garage.AI
+### AI Garage Assistant
 
-## Existing project owner: apply the update
+**Vehicle-aware conversations · Hybrid machine learning · Workshop discovery**
 
-Read [START-HERE.md](START-HERE.md). `INSTALL-UPDATE.cmd` copies corrected files into the original project after saving a backup and applying the additive migration. It preserves local secrets, Git history and existing database records. It never pushes to GitHub.
+A Group 09 academic prototype combining a trained Naive Bayes classifier with a language model to help users understand vehicle symptoms and find repair workshops.
 
-## Features and actual behaviour
+**React · Spring Boot · MySQL/MariaDB · Python · Groq**
 
-- Registration/login uses BCrypt and server-validated bearer sessions. Server-derived identity and vehicle ownership gate diagnosis. Admin routes require the database admin role.
-- A vehicle must be saved and selected. Brand/model/year/fuel context comes from the database.
-- Each vehicle's **New Diagnosis** starts a separate session. Successful messages and structured assessment/cost data are stored; refresh restores the active session. Legacy messages may have no structured cost card.
-- English/Tamil/Sinhala voice input uses browser speech recognition. Support, permissions and Internet requirements depend on the browser/device. No fake transcripts are inserted.
-- Naive Bayes uses user complaints from the current session, not just the latest short answer. Unknown words or weak evidence produce no category hint. Groq receives the bounded conversation and saved vehicle specs, asks clarifying questions, and produces a structured assessment.
-- Groq may disagree with the classifier. Its assessed category, explanation and cost are kept consistent instead of overwriting its conclusion with a weak classifier label.
-- A completed assessment may contain **AI_ESTIMATE** in LKR with parts/labour assumptions. This is an unverified approximate estimate, not a quote or live Sri Lankan market price. Missing/invalid estimates display **Unavailable**. Fixed demo price ranges have been removed.
-- History, symptom context and diagnosis are saved together transactionally. Persistence failure returns an error instead of pretending data was saved.
-- Garage Finder uses a locally maintained directory and Leaflet/OpenStreetMap. Locate Me displays position/accuracy; live tracking updates position until stopped. Distances are straight-line Haversine distances, not road travel distances or times.
-- Directions open externally in Google Maps. Demo locations are labelled previews. The app does not implement turn-by-turn navigation. Inherited non-demo directory coordinates/contact details are approximate and not independently verified; confirm them before actual navigation.
-- Admin can inspect user vehicles/symptoms/assessments/recommendations without password hashes; manage the catalogue/workshops; review/correct ML examples; retrain and roll back.
+[Getting Started](#getting-started-windows) · [How It Works](#how-it-works) · [ML Evaluation](#machine-learning-and-evaluation) · [Team](#team-contributions)
 
-## Architecture
+</div>
 
-| Component | Responsibility |
+> **Project status:** locally runnable academic prototype. This repository contains the application source, not a hosted website. Assessments and repair estimates support preliminary investigation and do not replace a mechanic's inspection.
+
+## Features
+
+| Feature | What the application provides |
 |---|---|
-| React pages and AppContext | Interface, authenticated API calls, vehicle/session state |
-| MlModelPanel | Review, correct, approve/reject, train, view metrics, rollback |
-| AuthFilter / AuthSessionService | Server bearer validation, role checks, logout revocation |
-| DiagnosisController / GroqService | Vehicle/session validation, classifier context, Groq calls |
-| DiagnosisPersistenceService | Atomic chat, symptom and diagnosis writes |
-| NaiveBayesService / NbScorer | Java inference using trained JSON weights |
-| RepairCostService | Validate optional approximate LKR estimates |
-| MlAdminController / ml/train.py | Controlled reviewed retraining and activation |
-| Nine MySQL tables | Users, vehicles/catalogue, conversations, symptoms, assessments, workshops, recommendations |
+| Account access | Registration, login, logout and server-validated bearer sessions |
+| Vehicle management | Saved vehicle details and mandatory vehicle selection before diagnosis |
+| Hybrid diagnosis | Locally trained fault classification combined with contextual Groq responses |
+| Multi-turn conversations | Follow-up questions, saved history and separate vehicle/session contexts |
+| Multilingual interaction | English, Tamil and Sinhala conversation; browser-supported voice input |
+| Repair-cost estimates | Optional approximate LKR ranges with assumptions and an AI-estimate label |
+| Garage Finder | Local workshop directory, location detection, straight-line distances and live position tracking |
+| Navigation | External Google Maps directions to the selected workshop |
+| Administration | User inspection, catalogue/workshop management and reviewed ML retraining |
 
-Python is used for training/evaluation only; no separate Python API server is needed. Local classification works offline. Groq answers and map tiles require Internet access.
+## How it works
 
-## Requirements
+1. The user logs in and selects a registered vehicle.
+2. The backend validates vehicle ownership and retrieves the current conversation context.
+3. A trained **Multinomial Naive Bayes** classifier predicts a fault-category hint from the user's symptoms.
+4. **Groq (`openai/gpt-oss-20b`)** receives the vehicle details, category hint and conversation context.
+5. The assistant asks a clarification or returns an assessment with possible causes, driving guidance and optional repair-cost information.
+6. The backend saves the conversation and structured assessment. The user can then explore workshops and open directions.
 
-- Windows with Java **JDK 17+**, Python 3.8+, Node.js 20+ and npm on PATH.
-- XAMPP MySQL/MariaDB on port 3306. The updater targets the previously configured root account with no password.
-- A Groq API key in `backend/src/main/resources/application-secret.properties` (ignored by Git).
-- Maven wrapper downloads dependencies on first run. The existing project uses Spring Boot 4.1.1; dependency versions have not been silently downgraded.
+Weak or unknown classifier evidence can produce no category hint. The language model may disagree with the classifier; it is not forced to repeat an unsupported category.
 
-## Fresh clone setup
+```mermaid
+flowchart TD
+    UI[React browser interface] --> API[Spring Boot API]
+    API <--> DB[(MySQL / MariaDB)]
+    API --> NB[Java Naive Bayes inference]
+    NB --> CTX[Vehicle and conversation context]
+    CTX --> LLM[Groq language model]
+    LLM --> SAVE[Validate and save assessment]
+    SAVE --> DB
+    SAVE --> UI
+```
 
-For a NEW EMPTY database only. Existing installations should use the additive update below.
+Python is used for training and evaluation. **No separate Python API server is required.** Java performs local inference using exported JSON weights. Groq responses and map services require Internet access.
 
-1. Start XAMPP MySQL. Create/select `vehicle_diagnosis_db` with utf8mb4 in phpMyAdmin.
-2. Import `database/schema.sql`, then `database/seed_data_anonymized.sql`. These files now contain no DROP/DELETE commands. The seed provides catalogue data, not private history or login accounts.
-3. Copy `backend/src/main/resources/application-secret.properties.example` to `application-secret.properties`. Set your own `groq.api.key`.
-4. Check `application.properties` for the local database URL, username and password. Default is root with an empty password. Do not commit real passwords.
-5. Start the app and register through the form. There are **no pre-created demo passwords**.
-6. To create the first admin, the local database owner can run this in phpMyAdmin, substituting the account just registered:
+## Technology stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite 6, React Router 7 |
+| Backend | Java 17, Spring Boot, Maven Wrapper |
+| Persistence | MySQL/MariaDB; XAMPP in the demonstrated Windows environment |
+| Machine learning | Multinomial Naive Bayes, Python standard-library training, Java inference |
+| Language generation | Groq API |
+| Maps | Leaflet, OpenStreetMap tiles, Google Maps directions handoff |
+| Voice and location | Browser speech and geolocation capabilities |
+
+## Getting started (Windows)
+
+These instructions create a **new local installation**. Existing users should keep their database and follow [Existing database updates](#existing-database-updates).
+
+### 1. Install prerequisites
+
+| Requirement | Purpose |
+|---|---|
+| JDK 17 or newer | Compile and run the backend; `javac` must be available |
+| Node.js 20 or newer with npm | Install and run the frontend |
+| XAMPP | Run MySQL/MariaDB and optionally phpMyAdmin through Apache |
+| Python 3.8 or newer | ML retraining and verification; not needed for Java inference alone |
+| Groq API key | Enable language-model responses using your own account |
+| Modern browser | Use the interface; speech support varies by browser |
+
+VS Code or Antigravity is optional. Neither an AI subscription nor an available agent quota is required to run the application. Git is optional when downloading a ZIP. Maven is supplied through the backend wrapper.
+
+After installing software, reopen your terminal and check:
+
+```powershell
+java -version
+javac -version
+node -v
+npm.cmd -v
+python --version
+```
+
+If a command is not recognized, check installation/PATH before continuing.
+
+### 2. Download and open the project
+
+**Without Git:** on this repository, choose **Code → Download ZIP**, then **Extract All**. Open the extracted folder containing `backend`, `frontend`, `database` and `ml`. This is the **project root**.
+
+**With Git:**
+
+```powershell
+git clone https://github.com/Garage-Group09/AI-Garage-Assistant.git
+cd AI-Garage-Assistant
+```
+
+In VS Code or Antigravity, choose **File → Open Folder** and select the project root. Open a terminal through **Terminal → New Terminal**. Alternatively, type `cmd` in File Explorer's address bar while viewing the root folder.
+
+### 3. Create the database
+
+1. Open **XAMPP Control Panel** and start **Apache** and **MySQL**.
+2. Open `http://localhost/phpmyadmin` in your browser. Use your configured Apache port if it differs.
+3. Click **New**, enter `vehicle_diagnosis_db`, select a UTF-8 collation such as `utf8mb4_unicode_ci`, and click **Create**.
+4. Select that database from the sidebar.
+5. Choose **Import → Choose File**, select `database/schema.sql`, then click **Go/Import**. Wait for success.
+6. Repeat the import with `database/seed_data_anonymized.sql`.
+
+The seed provides catalogue/workshop data, not shared login accounts. The current fresh schema contains the required columns. Do not import schema or seed over an existing database.
+
+MySQL must run while using the app. Apache is needed for phpMyAdmin, not for Spring Boot itself.
+
+### 4. Configure the API key and database connection
+
+Open `backend/src/main/resources`:
+
+1. Copy `application-secret.properties.example`.
+2. Rename the copy to **application-secret.properties**.
+3. Replace the example Groq key with your own valid key and save.
+
+Enable **File name extensions** in Windows Explorer to avoid accidentally creating `application-secret.properties.txt`.
+
+```properties
+groq.api.key=YOUR_GROQ_API_KEY
+```
+
+The default database configuration targets `vehicle_diagnosis_db` on `localhost:3306`, username `root`, with an empty password. If your settings differ, add overrides to the secret file:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/vehicle_diagnosis_db
+spring.datasource.username=YOUR_DATABASE_USER
+spring.datasource.password=YOUR_DATABASE_PASSWORD
+```
+
+Use your actual local values. The secret file is ignored by Git; do not commit or share it. AI responses require Internet access and available provider quota.
+
+### 5. Install frontend dependencies
+
+From a terminal at the **project root**:
+
+```powershell
+cd frontend
+npm.cmd ci
+```
+
+Wait for completion. Run this on first installation or after dependency updates, not every time you start the app.
+
+### 6. Start the backend and frontend
+
+Open **two separate terminals**, each initially at the project root. Keep both open while using the app.
+
+**Terminal 1 — backend:**
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+Wait for the Spring Boot **Started** message. The backend normally listens on port **8080**. Initial dependency downloads may take several minutes.
+
+**Terminal 2 — frontend:**
+
+```powershell
+cd frontend
+npm.cmd run dev -- --host
+```
+
+Open the exact **Local URL** printed by Vite, including its `http` or `https` scheme. The usual frontend port is **5173**. Frontend `/api` requests are proxied to the backend on port 8080.
+
+These commands work in Windows PowerShell and CMD. No startup scripts are required.
+
+### 7. Try the application
+
+1. **Register** an account and **log in**.
+2. Open **Vehicle**, enter the required details and save.
+3. Open **Diagnosis** and select your vehicle.
+4. Describe a symptom, for example: “My brakes squeak when I slow down.”
+5. Answer the assistant's clarifying questions.
+6. Review the assessment and approximate cost, or the Unavailable state.
+7. Open **Find Nearby Workshops**, allow location access if desired, and select a garage.
+8. Choose **Navigate (Maps)** to open Google Maps directions.
+
+### Starting again on another day
+
+Start XAMPP **MySQL**, then run the backend and frontend commands in separate terminals. Open the frontend URL and log in. Database import, dependency installation and model training do not need to be repeated.
+
+To stop, press **Ctrl+C** in each server terminal. If prompted to terminate the batch job, enter **Y**. Stop MySQL when no application needs it. Saved database records and model files remain on disk; restarting the backend clears in-memory login sessions.
+
+## Administrator setup
+
+Normal registration creates a customer account. To prepare an administrator for a local demonstration, the database owner can register the account, select the database in phpMyAdmin, open **SQL**, and run:
 
 ```sql
 UPDATE users SET Is_Admin = 1 WHERE email = 'your-registered-email@example.com';
 ```
 
-Log out and back in. Email alone does not grant administration; a database role is explicitly assigned. Normal registration always creates a non-admin user.
+Replace the email with the account you registered, then log out and back in. The administrator can inspect user records, manage workshops/catalogue data, and review ML examples. Password hashes are excluded from the inspection response.
 
-## Existing database: safe update
+## Phone demonstration
 
-`INSTALL-UPDATE.cmd` backs up the live database and files before applying `database/migrations/2026_09_24_safe_update.sql` to the original project. It stops if backup fails. Existing application.properties, secrets and Git metadata are preserved. Approved ML review data is kept; the serving classifier is reset to the packaged baseline consistently with its state file. Previously generated candidate models remain available locally.
+The PC must keep MySQL and both servers running. Connect the phone and PC to the same local network and open Vite's **Network URL** on the phone. Do not use `localhost` on the phone: it refers to the phone itself.
 
-For password-protected MySQL or a non-default installation: export the live database first, select it in phpMyAdmin, then import **only** `database/migrations/2026_09_24_safe_update.sql`. Apply the code files while retaining your secret configuration. Do not import schema or seed over live data.
+Same-network access also depends on firewall and hotspot/router isolation settings. Allow the development server on the trusted private network rather than disabling the whole firewall. Mic and location features may require a trusted HTTPS connection and browser permission. A certificate-warning bypass alone does not establish API availability. Never share a private certificate key.
 
-The migration checks columns before adding them and does not delete records, rewrite historical facts or invent missing values. New fields include diagnosis `session_id`, chat `metadata_json`, and missing cost/recommendation metadata. Legacy NULLs are retained: unknown safety is not safe, missing costs are unavailable, and optional profile fields can legitimately remain empty.
+Phone access to your PC uses your PC's database. A separate installation on another computer has independent accounts and data. This project is not currently a shared Internet deployment.
 
-## Run locally
+## Machine learning and evaluation
 
-Double-click `START-BACKEND.cmd` and `START-FRONTEND.cmd` from the project root. For a fresh setup, first run `npm ci` in frontend. Equivalent commands in separate terminals:
+### Dataset and classifier
 
-```text
-cd backend
-mvnw.cmd spring-boot:run
-```
+The [dataset](ml/data/vehicle_symptoms_dataset.json) contains **112 English examples**, 16 per category:
 
-```text
-cd frontend
-npm ci
-npm run dev -- --host
-```
+- Air conditioning
+- Brake system
+- Cooling system
+- Electrical and battery
+- Engine mechanical
+- Tires and suspension
+- Transmission
 
-Use the exact HTTPS Local/Network URL printed by Vite. Frontend `/api` calls proxy to `http://localhost:8080`. mkcert discovers current interfaces instead of fixing one old LAN IP.
+Supplied provenance labels identify 70 academic seed examples and 42 synthetic variations. Exact reference citations and paraphrase-group identifiers were not supplied with the dataset. It is an illustrative academic benchmark, not a verified collection of mechanic-confirmed repairs.
 
-Phone mic/GPS require supported APIs, permissions and a trusted secure connection. Use the same Wi-Fi; install only your own development public CA certificate if necessary. Never share its private key. Bypassing a certificate warning is not proof that secure browser APIs will work.
+Multinomial Naive Bayes uses bag-of-words counts and Laplace smoothing (`alpha = 1`). A deterministic seed-42 stratified split produces **91 training examples and 21 evaluation examples**. Vocabulary is learned from training data only.
 
-Backend restart clears in-memory sessions, so sign in again. Refresh preserves a still-valid session. Each PC has its own database; logging in with an email does not connect separate local installations. Shared remote data requires a shared hosted backend/database, outside this local prototype.
+### Results
 
-## ML dataset, training and limitations
+| Measure | Committed baseline v1.0.0 | Demonstrated local candidate |
+|---|---:|---:|
+| Training examples | 91 | 93 |
+| Evaluation examples | 21 | 21 |
+| Accuracy | 61.90% | 71.43% |
+| Macro F1 | 0.5976 | 0.7095 |
 
-[Dataset](ml/data/vehicle_symptoms_dataset.json): 112 English examples, 16 per category across seven categories. Supplied provenance tags are 70 `academic_seed_benchmark` and 42 `synthetic_variation`. Exact reference citations/group identifiers were not supplied. Treat it as illustrative academic data, not a validated real-repair dataset. Synthetic/paraphrase similarity can inflate random-split scores.
+The [baseline evaluation report](ml/models/evaluation_report_v1.0.0.json) includes per-class metrics and the confusion matrix. The candidate result was observed in the local admin interface on 24 September 2026. The repository distributes the baseline; private candidate data/state is not included.
 
-Multinomial Naive Bayes uses bag-of-words counts and Laplace smoothing (alpha=1). Deterministic seed-42 stratification yields **91 training and 21 evaluation examples**, three evaluation examples per class. Vocabulary is learned only on training data. Exact normalized duplicate candidates are excluded; evaluation-set duplicates are rejected. Near-paraphrase detection is not implemented.
-
-| Baseline measure | Value |
-|---|---:|
-| Accuracy | 61.90% (13/21) |
-| Macro F1 | 0.5976 |
-| Macro precision | 0.6810 |
-| Macro recall | 0.6190 |
-
-[Full report](ml/models/evaluation_report_v1.0.0.json) and Admin → ML Model show per-class results and a 7×7 confusion matrix. Classifier probabilities are uncalibrated. Diagnosis confidence is an **LLM self-reported estimate**, not measured model accuracy.
-
-```text
-python ml/evaluate.py
-python ml/verify_inference.py
-python -m unittest discover -s ml/tests -v
-```
-
-Parity verification actually compiles and executes the production Java `NbScorer`, comparing all class probabilities with Python on 12 fixtures. It measures implementation agreement, not diagnostic quality.
+The small evaluation set is reused for model selection, so it is a **development benchmark**, not an independent final test. Exact evaluation-text overlaps are rejected, but near-paraphrase leakage is not ruled out. These scores do not establish real-world diagnostic accuracy.
 
 ### Reviewed retraining
 
-1. Admin → ML Model: review a completed diagnosis.
-2. Correct its category and edit symptom text into anonymized English. Remove names/addresses/other personal data; backend redaction additionally handles common email/phone patterns.
-3. Approve or reject explicitly. Chat storage alone does **not** train the model. LLM outputs are not automatically ground truth.
-4. Train approved examples. Deduplicated examples are added only to training. Concurrent jobs are blocked; generated files use replacement writes.
-5. A content-versioned candidate must meet or exceed baseline accuracy **and** macro F1 to activate. Rejection keeps the actual previous model/version. The API reloads Java after success and reports reload failure.
-6. Restore baseline rolls back to v1.0.0. CLI: `python ml/train.py` or `python ml/train.py --rollback`; restart the backend after CLI changes.
+1. Open **Admin Panel → ML Model**.
+2. Review a completed diagnosis, correct the category, and edit the symptom into anonymized English.
+3. Explicitly approve or reject the example.
+4. Select **Train approved examples**.
+5. Deduplicated approved examples are added to training. Candidate accuracy and macro F1 must both meet or exceed baseline thresholds to activate.
+6. A rejected candidate preserves the previous serving model. **Restore baseline model** restores v1.0.0.
 
-The small held-out set is reused for activation, so it is a **development benchmark**, not an independent final test. Do not claim automatic improvement or production readiness. Larger independently labelled data and an untouched final test set are future work. Naive Bayes is English-only; Groq handles Tamil/Sinhala while classification may abstain.
+Chat storage does not automatically train the model. LLM-generated labels are not automatically ground truth. Training the classifier does not fine-tune Groq, and activation does not guarantee improvement over every previous candidate.
 
-Private approved examples and generated candidate artifacts are ignored by Git. Baseline models, source dataset and maintained tests are retained. Run the backend from backend/ as the launcher does.
+## Testing and verification
 
-## Verification before presentation / push
+Run each block from the indicated location. The commands replace the removed verification shortcut.
 
-`CHECK-PC.cmd` runs seven Python regressions, actual Java/Python parity, baseline evaluation, database-independent Java unit tests and frontend build. The full application context test requires a running configured DB/key; build success alone does not prove live Groq/phone behaviour.
+**From the project root — Python tests, baseline evaluation and Java/Python scoring parity:**
 
-Manual checks after starting the servers:
+```powershell
+python -m unittest discover -s ml/tests -v
+python ml/evaluate.py ml/models/nb_model_v1.0.0.json
+python ml/verify_inference.py
+```
 
-1. Login/refresh; logout blocks diagnosis/admin access.
-2. Add/select vehicle, describe brakes squeaking, answer a follow-up with “yes”: assessment category must remain consistent with the whole complaint.
-3. Completed assessment shows approximate LKR range or Unavailable; refresh restores its cost card.
-4. New Diagnosis and vehicle changes isolate context; garage suggestions follow that vehicle/session.
-5. Voice, Locate Me and Start/Stop Tracking work on the actual phone.
-6. Admin review/correct/approve → train → view serving metrics → rollback. Invalid categories and evaluation-set duplicates cannot enter training.
-7. Inspect saved diagnosis/cost through admin/phpMyAdmin. A persistence error must be visible, not silently skipped.
+The explicit model path evaluates the baseline. Without it, `evaluate.py` evaluates the current local serving model. Parity compares production Java/Python scoring on 12 fixtures; it measures implementation agreement, not diagnostic accuracy.
 
-Verification evidence supplied from the owner's Windows PC on 2026-09-24: seven Python tests passed, Java/Python scoring parity passed on twelve fixtures, four Java unit tests passed with BUILD SUCCESS, and the frontend production build passed. Browser screenshots demonstrate login, vehicle gating, multi-turn diagnosis, approximate repair cost, restored conversation/cost, location display, external Google Maps directions, and admin review/retraining.
+**From the project root — selected database-independent Java tests:**
 
-The local reviewed candidate `candidate_5859ed974384` was shown ACTIVATED with 93 training examples, 21 evaluation examples, accuracy 71.43% (15/21) and macro F1 0.7095. This is user-supplied runtime evidence; the committed baseline report remains 61.90%. Local private candidate files are not distributed. Phone verification and final Git staging review remain owner checks.
+```powershell
+cd backend
+.\mvnw.cmd "-Dtest=NaiveBayesServiceTest,DiagnosisLogicTest" test
+```
 
-The final small patch preserves this trained candidate and changes only UI, dependency manifests and the Hibernate DDL setting. Existing migrated schemas use `spring.jpa.hibernate.ddl-auto=none`; future schema changes must use explicit migrations. This prevents automatic foreign-key column alterations; it does not convert existing column types.
+**In another terminal at the project root — frontend build and dependency audit:**
 
+```powershell
+cd frontend
+npm.cmd run build
+npm.cmd audit
+```
+
+Recorded Windows verification on 24 September 2026: **7 Python tests passed**, **12 scoring-parity fixtures passed**, **4 Java unit tests passed**, and the updated frontend production build passed. The dependency audit reported **0 vulnerabilities at that time**; this is not a complete application security audit.
+
+Manual demonstration evidence includes login, vehicle gating, multi-turn diagnosis, restored history/cost cards, location display, external directions and reviewed retraining. Phone networking and permissions should be verified on the actual demonstration device.
+
+## Database and project structure
+
+| Directory | Contents |
+|---|---|
+| `backend/` | Spring Boot API, authentication, persistence, Java classifier and tests |
+| `frontend/` | React interface, styles and Vite configuration |
+| `database/` | Fresh schema, catalogue seed and additive migrations |
+| `ml/` | Dataset, training/evaluation scripts, baseline model and tests |
+
+The database has nine tables: `users`, `vehicle_brand`, `vehicle_model`, `vehicle`, `symptom`, `diagnosis`, `chat_history`, `garage`, and `garage_recommendation`. See [schema.sql](database/schema.sql) for column definitions and declared constraints.
+
+### Existing database updates
+
+Back up your database before applying a schema change. Select the intended existing database and apply only the required additive migration, such as [2026_09_24_safe_update.sql](database/migrations/2026_09_24_safe_update.sql). Do not re-import fresh schema/seed over existing records.
+
+Hibernate automatic schema mutation is disabled (`ddl-auto=none`); schema changes use explicit migrations. Optional or historically unavailable fields may remain NULL. Missing facts are not replaced with fabricated values.
+
+## Troubleshooting
+
+| Problem | Action |
+|---|---|
+| Command not recognized | Verify the software is installed/on PATH, then reopen the terminal |
+| PowerShell blocks `npm.ps1` | Use `npm.cmd` as shown above |
+| `'vite' is not recognized` | Run `npm.cmd ci` in `frontend` before starting it |
+| `EPERM` mentions `esbuild.exe` | Stop frontend processes before installing; if necessary restart Windows and install before launching the app |
+| Database connection failure | Check MySQL is running and database name, port and credentials match |
+| Backend port already in use | Stop the earlier backend instance before starting another |
+| AI response fails | Check your Groq key, network, quota and backend error; do not share the key |
+| Login expires after restart | Expected: backend sessions are in memory; log in again |
+| Phone cannot open the app | Check the PC's Network URL, private-network firewall access and hotspot/router isolation |
+| Voice/location unavailable | Check browser support, permissions and trusted secure connection |
+
+## Scope and limitations
+
+- Workshop discovery uses a **local directory**, not a live Places API. Directory details need independent verification.
+- In-app distances are straight-line approximations; Google Maps provides external road directions.
+- Repair prices are approximate AI estimates, not verified garage quotations or live market prices.
+- The diagnosis card's AI self-estimate is distinct from classifier probabilities and measured evaluation accuracy.
+- The Naive Bayes dataset is English-only; multilingual conversation relies on Groq and browser speech support.
+- A shared hosted service, broader validated datasets and production hardening are future work.
 
 ## Team contributions
 
-These four names/areas were recorded in the uploaded README. Git history was not included, so they are **reported, not independently verified**. Confirm with the team before submission. A fifth member's details were not supplied.
+The following contributions are reported by the project team. Collaborative testing, UI assistance and documentation can include work that is not represented by individual Git commits.
 
-| Member | Reported area |
+| Member | Contribution area |
 |---|---|
 | Mohamed Ibrahim Mohamed Isfak | Full-stack integration and ML architecture |
 | Sasika Dinushankha | Backend security and core services |
 | Sanduni Navodya Thilakasiri | Administration and frontend UI |
 | Maryam Mohamed Mihlar | Database design and data modelling |
-| Nayanajith | Manual testing, UI support, and project documentation |
+| Nayanajith | Manual testing across login, registration, vehicle, diagnosis and garage pages; UI assistance with confirm-password and admin forms; setup documentation |
 
-AI-assisted changes do not establish which student originally implemented a subsystem. Replace the reported areas with agreed evidence-based contributions.
+## Repository hygiene
 
-## GitHub handover
+Keep source code, maintained tests, dataset provenance, schema/migrations and baseline evaluation artifacts in version control. Exclude secrets, private certificates, personal SQL backups, private reviewed examples, runtime candidates, caches, dependencies and build outputs.
 
-Commit source, fresh schema, additive migrations, catalogue seed, baseline models, maintained tests and README. Exclude secrets, private certificates, personal SQL dumps, private review text, caches and dependencies/build output. `.gitignore` does not untrack existing commits: inspect `git status` and `git ls-files` before pushing. No script commits, pushes, force-pushes or deploys.
+Local retraining can modify `backend/src/main/resources/nb_model.json`. Preserve the intended local model when updating or staging files; do not blindly restore or publish it. A GitHub push does not upload the live database or host the application.
