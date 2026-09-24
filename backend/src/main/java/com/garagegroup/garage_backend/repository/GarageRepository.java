@@ -13,4 +13,7 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
 
     /** Returns garages whose Specialization contains the given keyword (case-insensitive). */
     List<Garage> findBySpecializationContainingIgnoreCase(String keyword);
+
+    /** Returns only verified real garages (excluding demo records). */
+    List<Garage> findByIsDemoFalse();
 }

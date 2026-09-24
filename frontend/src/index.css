@@ -106,6 +106,7 @@ body {
   font-weight: 800;
   font-size: 1.3rem;
   letter-spacing: -0.4px;
+  white-space: nowrap;
 }
 
 .logo-icon {
@@ -131,6 +132,7 @@ body {
   display: inline-flex;
   align-items: center;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .logo-highlight {
@@ -484,35 +486,40 @@ body {
   }
 
   .container {
-    padding: 1.25rem 1rem !important;
+    padding: 1rem 0.75rem !important;
     max-width: 100% !important;
   }
 
-  .card {
+  .card:not(.diagnosis-chat-card) {
     padding: 1.25rem !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
 
+  .diagnosis-chat-card {
+    padding: 0 !important;
+  }
+
   /* Navbar */
   .navbar-container {
-    padding: 0.75rem 1rem !important;
+    padding: 0.65rem 0.75rem !important;
   }
 
   .navbar-logo {
-    font-size: 1.15rem !important;
-    gap: 0.5rem !important;
+    font-size: 1.05rem !important;
+    gap: 0.45rem !important;
     min-width: 0 !important;
+    white-space: nowrap !important;
   }
 
   .logo-icon {
-    width: 32px !important;
-    height: 32px !important;
+    width: 30px !important;
+    height: 30px !important;
     flex-shrink: 0 !important;
   }
 
   .navbar-actions {
-    gap: 0.4rem !important;
+    gap: 0.35rem !important;
     flex-shrink: 0 !important;
   }
 
@@ -520,7 +527,7 @@ body {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    padding: 0.35rem !important;
+    padding: 0.3rem !important;
     flex-shrink: 0 !important;
   }
 
@@ -529,7 +536,26 @@ body {
   }
 
   .navbar-user-chip {
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.2rem 0.45rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .navbar-logout-btn {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  @media (max-width: 400px) {
+    .navbar-logout-btn .logout-text {
+      display: none !important;
+    }
+    .navbar-logout-btn {
+      padding: 0.25rem 0.4rem !important;
+    }
+    .navbar-logo {
+      font-size: 0.98rem !important;
+      gap: 0.35rem !important;
+    }
   }
 
   /* Navbar items stack vertically in mobile dropdown */
@@ -696,44 +722,66 @@ body {
 
   /* Diagnosis Chat Box on Mobile View */
   .diagnosis-chat-card {
-    height: calc(100vh - 260px) !important;
+    height: calc(100vh - 240px) !important;
     min-height: 420px;
     border-radius: var(--radius-md) !important;
+    padding: 0 !important;
   }
 
   .diagnosis-messages-container {
-    padding: 0.85rem !important;
-    gap: 0.85rem !important;
+    padding: 0.75rem !important;
+    gap: 0.75rem !important;
   }
 
   .diagnosis-bubble {
-    max-width: 90% !important;
-    font-size: 0.9rem !important;
-    padding: 0.7rem 0.9rem !important;
+    max-width: calc(100% - 44px) !important;
+    font-size: 0.88rem !important;
+    padding: 0.7rem 0.85rem !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    box-sizing: border-box !important;
+  }
+
+  .diagnosis-chat-title {
+    font-size: 0.95rem !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .diagnosis-suggestion-btn {
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-width: 100% !important;
+    text-align: left !important;
+    display: inline-flex !important;
+    flex-wrap: wrap !important;
+    line-height: 1.35 !important;
+    font-size: 0.8rem !important;
+    padding: 0.35rem 0.65rem !important;
   }
 
   .diagnosis-input-form {
-    padding: 0.65rem 0.75rem !important;
-    gap: 0.45rem !important;
+    padding: 0.55rem 0.65rem !important;
+    gap: 0.4rem !important;
   }
 
   .diagnosis-input-form .form-input {
     font-size: 0.88rem !important;
-    padding: 0.6rem 0.85rem !important;
+    padding: 0.55rem 0.75rem !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
     width: auto !important;
   }
 
   .diagnosis-input-form .btn {
-    width: 42px !important;
-    height: 42px !important;
+    width: 40px !important;
+    height: 40px !important;
     flex-shrink: 0 !important;
     padding: 0 !important;
   }
 
   .diagnosis-chat-header {
-    padding: 0.75rem 1rem !important;
+    padding: 0.75rem 0.85rem !important;
   }
 
   .diagnosis-page-header {

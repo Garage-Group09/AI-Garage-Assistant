@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Car, PlusCircle, Trash2, Fuel, Shield, Layers, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const VehiclePage = () => {
-  const { vehicles, addVehicle, removeVehicle } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { vehicles, addVehicle, removeVehicle, getAuthHeaders } = useApp();
 
   // ── Form field state ───────────────────────────────────────────────────────
   const [selectedBrandId, setSelectedBrandId] = useState('');
@@ -11,6 +14,8 @@ export const VehiclePage = () => {
   const [year, setYear]                       = useState('');
   const [fuelType, setFuelType]               = useState('Petrol');
   const [vehicleType, setVehicleType]         = useState('Sedan');
+  const [isSubmitting, setIsSubmitting]       = useState(false);
+  const [fuelWarning, setFuelWarning]         = useState(null);
 
   // ── API-driven brand / model lists ────────────────────────────────────────
   const [brands, setBrands]           = useState([]);   // [{ brandId, brandName }]
@@ -18,10 +23,17 @@ export const VehiclePage = () => {
   const [brandsLoading, setBrandsLoading] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
 
+  // Known model → required fuel type constraints (based on verified model information)
+  // Key is LOWERCASE model name, value is list of compatible fuel types.
+  const FUEL_CONSTRAINTS = {
+    'leaf':  ['Electric'],           // Nissan Leaf is a pure BEV
+    'aqua':  ['Hybrid', 'Electric'], // Toyota Aqua is a hybrid
+  };
+
   // Fetch all brands once on mount
   useEffect(() => {
     setBrandsLoading(true);
-    fetch('http://localhost:8080/api/brands')
+    fetch('/api/brands', { headers: getAuthHeaders ? getAuthHeaders() : {} })
       .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then(setBrands)
       .catch((err) => console.error('Failed to fetch brands:', err))
@@ -30,15 +42,32 @@ export const VehiclePage = () => {
 
   // Fetch models whenever the selected brand changes
   useEffect(() => {
-    if (!selectedBrandId) { setModels([]); return; }
+    if (!selectedBrandId) { setModels([]); setFuelWarning(null); return; }
     setSelectedModelId('');
+    setFuelWarning(null);
     setModelsLoading(true);
-    fetch(`http://localhost:8080/api/models/${selectedBrandId}`)
+    fetch(`/api/models/${selectedBrandId}`, { headers: getAuthHeaders ? getAuthHeaders() : {} })
       .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then(setModels)
       .catch((err) => console.error('Failed to fetch models:', err))
       .finally(() => setModelsLoading(false));
   }, [selectedBrandId]);
+
+  // Check fuel type compatibility when model or fuel type changes
+  useEffect(() => {
+    if (!selectedModelId || !fuelType) { setFuelWarning(null); return; }
+    const selectedModel = models.find(m => m.modelId === Number(selectedModelId));
+    if (!selectedModel) { setFuelWarning(null); return; }
+    const constraints = FUEL_CONSTRAINTS[selectedModel.modelName.toLowerCase()];
+    if (constraints && !constraints.includes(fuelType)) {
+      setFuelWarning(
+        `⚠️ Note: The ${selectedModel.modelName} is known to use ${constraints.join(' or ')} fuel. ` +
+        `Selecting ${fuelType} may be incorrect. Please verify your vehicle's fuel type.`
+      );
+    } else {
+      setFuelWarning(null);
+    }
+  }, [selectedModelId, fuelType, models]);
 
   const resetForm = () => {
     setSelectedBrandId('');
@@ -49,23 +78,34 @@ export const VehiclePage = () => {
     setModels([]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedBrandId || !selectedModelId) return;
+    if (!selectedBrandId || !selectedModelId || isSubmitting) return;
 
     // Derive the brand name string for the legacy Brand column
     const brandObj = brands.find((b) => b.brandId === Number(selectedBrandId));
     const brandName = brandObj ? brandObj.brandName : '';
 
-    addVehicle({
-      brand:   brandName,
-      modelId: Number(selectedModelId),
-      year:    year ? Number(year) : null,
-      fuelType,
-      vehicleType
-    });
+    setIsSubmitting(true);
+    try {
+      const saved = await addVehicle({
+        brand:   brandName,
+        modelId: Number(selectedModelId),
+        year:    year ? Number(year) : null,
+        fuelType,
+        vehicleType
+      });
 
-    resetForm();
+      if (saved) {
+        resetForm();
+        const returnTo = location.state?.returnTo;
+        if (returnTo) {
+          navigate(returnTo, { state: { selectedVehicleId: saved.id } });
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getFuelBadgeClass = (fuel) => {
@@ -215,6 +255,22 @@ export const VehiclePage = () => {
               </button>
             </div>
           </form>
+
+          {/* Fuel type compatibility warning */}
+          {fuelWarning && (
+            <div style={{
+              marginTop: '1rem',
+              padding: '0.8rem 1rem',
+              background: 'rgba(255, 165, 0, 0.12)',
+              border: '1px solid rgba(255, 165, 0, 0.4)',
+              borderRadius: '8px',
+              color: 'var(--text-primary)',
+              fontSize: '0.88rem',
+              lineHeight: 1.5,
+            }}>
+              {fuelWarning}
+            </div>
+          )}
         </div>
 
         {/* Vehicles Table Card */}

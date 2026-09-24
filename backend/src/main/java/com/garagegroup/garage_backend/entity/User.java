@@ -3,7 +3,7 @@ package com.garagegroup.garage_backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -17,6 +17,7 @@ public class User {
     @Column(name = "Email", unique = true)
     private String email;
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "Password")
     private String password;
 

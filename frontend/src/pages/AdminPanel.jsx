@@ -1,3 +1,4 @@
+import MlModelPanel from '../components/MlModelPanel';
 import React, { useState, useEffect } from 'react';
 import {
   Users,
@@ -12,7 +13,13 @@ import {
   Shield,
   Filter,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Activity,
+  FileText,
+  CheckCircle2,
+  Info,
+  Compass
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -21,17 +28,19 @@ const toUiUser = (dto) => ({
   id:     dto.userId,
   name:   dto.name,
   email:  dto.email,
-  role:   dto.isAdmin ? 'Administrator' : 'Customer',
+  role:   (dto.isAdmin === true || dto.admin === true) ? 'Administrator' : 'Customer',
   status: 'Active'   // status is not stored in the backend yet; default to Active
 });
 
 /** Maps a Garage API response to the UI row shape used by AdminPanel. */
 const toUiGarage = (g) => ({
-  id:       g.garageId,
-  name:     g.garageName    ?? '',
-  location: g.location      ?? '',
-  phone:    g.phoneNo       ?? '',
-  rating:   g.rating != null ? String(g.rating) : ''
+  id:        g.garageId,
+  name:      g.garageName    ?? '',
+  location:  g.location      ?? '',
+  phone:     g.phoneNo       ?? '',
+  rating:    g.rating != null ? String(g.rating) : '',
+  latitude:  g.latitude != null ? String(g.latitude) : '',
+  longitude: g.longitude != null ? String(g.longitude) : ''
 });
 
 /**
@@ -48,12 +57,13 @@ const toBrandUiList = (apiBrands, apiModels) =>
   }));
 
 export const AdminPanel = () => {
-  const { showToast, user } = useApp();
+  const { showToast, user, getAuthHeaders } = useApp();
 
-  // Admin user ID header value, derived from the logged-in user's session
-  const adminId = user?.userId ? String(user.userId) : '';
+  // Auth headers — uses session token from context (no legacy X-Admin-User-Id needed)
+  const authHeaders = getAuthHeaders ? getAuthHeaders() : { 'Content-Type': 'application/json' };
+  const adminId = user?.userId ? String(user.userId) : ''; // kept for guard checks only
 
-  // Navigation Tab State: 'users' | 'garages' | 'brands'
+  // Navigation Tab State: 'users' | 'garages' | 'brands' | 'ml'
   const [activeTab, setActiveTab] = useState('users');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -69,8 +79,8 @@ export const AdminPanel = () => {
   useEffect(() => {
     if (!adminId) return;
     setUsersLoading(true);
-    fetch('http://localhost:8080/api/admin/users', {
-      headers: { 'X-Admin-User-Id': adminId }
+    fetch('/api/admin/users', {
+      headers: authHeaders
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -88,8 +98,8 @@ export const AdminPanel = () => {
   useEffect(() => {
     if (!adminId) return;
     setGaragesLoading(true);
-    fetch('http://localhost:8080/api/admin/garages', {
-      headers: { 'X-Admin-User-Id': adminId }
+    fetch('/api/admin/garages', {
+      headers: authHeaders
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -108,8 +118,8 @@ export const AdminPanel = () => {
     if (!adminId) return;
     setBrandsLoading(true);
     Promise.all([
-      fetch('http://localhost:8080/api/admin/brands', { headers: { 'X-Admin-User-Id': adminId } }).then((r) => r.json()),
-      fetch('http://localhost:8080/api/admin/models',  { headers: { 'X-Admin-User-Id': adminId } }).then((r) => r.json())
+      fetch('/api/admin/brands', { headers: authHeaders }).then((r) => r.json()),
+      fetch('/api/admin/models',  { headers: authHeaders }).then((r) => r.json())
     ])
       .then(([apiBrands, apiModels]) => setBrands(toBrandUiList(apiBrands, apiModels)))
       .catch((err) => {
@@ -126,11 +136,39 @@ export const AdminPanel = () => {
 
   // Form states for modals
   const [userFormData, setUserFormData] = useState({ name: '', email: '', role: 'Customer', status: 'Active' });
-  const [garageFormData, setGarageFormData] = useState({ name: '', location: '', phone: '', rating: '4.5' });
+  const [garageFormData, setGarageFormData] = useState({ name: '', location: '', phone: '', rating: '4.5', latitude: '', longitude: '' });
   const [brandFormData, setBrandFormData] = useState({ brand: '', modelsText: '' });
 
   // Delete Confirmation Modal
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, type: '', id: null, name: '' });
+
+  // User Inspection Modal State (GET /api/admin/users/{id}/details)
+  const [inspectModalOpen, setInspectModalOpen] = useState(false);
+  const [inspectLoading, setInspectLoading] = useState(false);
+  const [inspectDetails, setInspectDetails] = useState(null);
+  const [inspectUser, setInspectUser] = useState(null);
+  const [inspectTab, setInspectTab] = useState('vehicles'); // 'vehicles' | 'symptoms' | 'diagnoses' | 'recommendations'
+
+  const handleInspectUser = async (u) => {
+    setInspectUser(u);
+    setInspectModalOpen(true);
+    setInspectLoading(true);
+    setInspectDetails(null);
+    setInspectTab('vehicles');
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/details`, {
+        headers: authHeaders
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setInspectDetails(data);
+    } catch (err) {
+      console.error('Failed to load user details:', err);
+      showToast?.('Could not load user inspection details.');
+    } finally {
+      setInspectLoading(false);
+    }
+  };
 
   // ================= Open Modal Handlers =================
   const handleOpenAdd = () => {
@@ -139,7 +177,7 @@ export const AdminPanel = () => {
     if (activeTab === 'users') {
       setUserFormData({ name: '', email: '', role: 'Customer', status: 'Active' });
     } else if (activeTab === 'garages') {
-      setGarageFormData({ name: '', location: '', phone: '', rating: '4.5' });
+      setGarageFormData({ name: '', location: '', phone: '', rating: '4.5', latitude: '', longitude: '' });
     } else {
       setBrandFormData({ brand: '', modelsText: '' });
     }
@@ -152,7 +190,14 @@ export const AdminPanel = () => {
     if (activeTab === 'users') {
       setUserFormData({ name: item.name, email: item.email, role: item.role, status: item.status });
     } else if (activeTab === 'garages') {
-      setGarageFormData({ name: item.name, location: item.location, phone: item.phone, rating: item.rating });
+      setGarageFormData({
+        name: item.name,
+        location: item.location,
+        phone: item.phone,
+        rating: item.rating,
+        latitude: item.latitude ?? '',
+        longitude: item.longitude ?? ''
+      });
     } else {
       setBrandFormData({ brand: item.brand, modelsText: item.models.join(', ') });
     }
@@ -178,12 +223,9 @@ export const AdminPanel = () => {
       } else {
         // PUT /api/admin/users/{id} — persist the change server-side
         const isAdminFlag = userFormData.role === 'Administrator';
-        fetch(`http://localhost:8080/api/admin/users/${editingItem.id}`, {
+        fetch(`/api/admin/users/${editingItem.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-User-Id': adminId
-          },
+          headers: authHeaders,
           body: JSON.stringify({
             name:    userFormData.name.trim(),
             email:   userFormData.email.trim(),
@@ -207,17 +249,31 @@ export const AdminPanel = () => {
       }
     } else if (activeTab === 'garages') {
       if (!garageFormData.name.trim() || !garageFormData.location.trim()) return;
+      const latVal = garageFormData.latitude !== '' ? Number(garageFormData.latitude) : null;
+      const lngVal = garageFormData.longitude !== '' ? Number(garageFormData.longitude) : null;
+      if (latVal != null && (isNaN(latVal) || latVal < -90 || latVal > 90)) {
+        showToast?.('Latitude must be a valid number between -90 and 90.');
+        return;
+      }
+      if (lngVal != null && (isNaN(lngVal) || lngVal < -180 || lngVal > 180)) {
+        showToast?.('Longitude must be a valid number between -180 and 180.');
+        return;
+      }
+      const garagePayload = {
+        garageName: garageFormData.name.trim(),
+        location:   garageFormData.location.trim(),
+        phoneNo:    garageFormData.phone.trim() || null,
+        rating:     garageFormData.rating ? Number(garageFormData.rating) : null,
+        latitude:   latVal,
+        longitude:  lngVal
+      };
+
       if (modalMode === 'add') {
         // POST /api/admin/garages
-        fetch('http://localhost:8080/api/admin/garages', {
+        fetch('/api/admin/garages', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
-          body: JSON.stringify({
-            garageName: garageFormData.name.trim(),
-            location:   garageFormData.location.trim(),
-            phoneNo:    garageFormData.phone.trim() || null,
-            rating:     garageFormData.rating ? Number(garageFormData.rating) : null
-          })
+          headers: authHeaders,
+          body: JSON.stringify(garagePayload)
         })
           .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
           .then((saved) => {
@@ -227,15 +283,10 @@ export const AdminPanel = () => {
           .catch((err) => { console.error('Failed to add garage:', err); showToast?.('Failed to add garage.'); });
       } else {
         // PUT /api/admin/garages/{id}
-        fetch(`http://localhost:8080/api/admin/garages/${editingItem.id}`, {
+        fetch(`/api/admin/garages/${editingItem.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
-          body: JSON.stringify({
-            garageName: garageFormData.name.trim(),
-            location:   garageFormData.location.trim(),
-            phoneNo:    garageFormData.phone.trim() || null,
-            rating:     garageFormData.rating ? Number(garageFormData.rating) : null
-          })
+          headers: authHeaders,
+          body: JSON.stringify(garagePayload)
         })
           .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
           .then((updated) => {
@@ -253,9 +304,9 @@ export const AdminPanel = () => {
 
       if (modalMode === 'add') {
         // POST /api/admin/brands first, then POST each model individually
-        fetch('http://localhost:8080/api/admin/brands', {
+        fetch('/api/admin/brands', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+          headers: authHeaders,
           body: JSON.stringify({ brandName: brandFormData.brand.trim() })
         })
           .then((res) => {
@@ -266,9 +317,9 @@ export const AdminPanel = () => {
             // POST each model name sequentially
             const savedModelNames = [];
             for (const modelName of modelList) {
-              const mRes = await fetch('http://localhost:8080/api/admin/models', {
+              const mRes = await fetch('/api/admin/models', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Admin-User-Id': adminId },
+                headers: authHeaders,
                 body: JSON.stringify({ brandId: savedBrand.brandId, modelName })
               });
               if (mRes.ok) savedModelNames.push(modelName);
@@ -285,19 +336,37 @@ export const AdminPanel = () => {
             showToast?.('Failed to add brand. Please try again.');
           });
       } else {
-        // Edit remains local-only (no brand/model PUT endpoints yet)
-        setBrands(
-          brands.map((b) =>
-            b.id === editingItem.id
-              ? {
-                  ...b,
-                  brand: brandFormData.brand.trim(),
-                  models: modelList.length ? modelList : b.models
-                }
-              : b
-          )
-        );
-        showToast?.(`Brand "${brandFormData.brand}" updated!`);
+        // PUT /api/admin/brands/{id} — persist brand and model changes to the server
+        fetch(`/api/admin/brands/${editingItem.id}`, {
+          method: 'PUT',
+          headers: authHeaders,
+          body: JSON.stringify({
+            brandName: brandFormData.brand.trim(),
+            models: modelList
+          })
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+          .then(() => {
+            setBrands((prev) =>
+              prev.map((b) =>
+                b.id === editingItem.id
+                  ? {
+                      ...b,
+                      brand: brandFormData.brand.trim(),
+                      models: modelList
+                    }
+                  : b
+              )
+            );
+            showToast?.(`Brand "${brandFormData.brand}" updated with ${modelList.length} models!`);
+          })
+          .catch((err) => {
+            console.error('Failed to update brand:', err);
+            showToast?.('Failed to update brand on server.');
+          });
       }
     }
 
@@ -318,9 +387,9 @@ export const AdminPanel = () => {
     const { type, id, name } = deleteConfirm;
     if (type === 'users') {
       // DELETE /api/admin/users/{id} — remove from the database first
-      fetch(`http://localhost:8080/api/admin/users/${id}`, {
+      fetch(`/api/admin/users/${id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-User-Id': adminId }
+        headers: authHeaders
       })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -333,9 +402,9 @@ export const AdminPanel = () => {
         });
     } else if (type === 'garages') {
       // DELETE /api/admin/garages/{id}
-      fetch(`http://localhost:8080/api/admin/garages/${id}`, {
+      fetch(`/api/admin/garages/${id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-User-Id': adminId }
+        headers: authHeaders
       })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -344,8 +413,20 @@ export const AdminPanel = () => {
         })
         .catch((err) => { console.error('Failed to delete garage:', err); showToast?.('Failed to delete garage.'); });
     } else if (type === 'brands') {
-      setBrands(brands.filter((b) => b.id !== id));
-      showToast?.(`Brand "${name}" removed.`);
+      // DELETE /api/admin/brands/{id}
+      fetch(`/api/admin/brands/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          setBrands((prev) => prev.filter((b) => b.id !== id));
+          showToast?.(`Brand "${name}" removed.`);
+        })
+        .catch((err) => {
+          console.error('Failed to delete brand:', err);
+          showToast?.('Cannot delete brand: linked to registered vehicles.');
+        });
     }
     setDeleteConfirm({ open: false, type: '', id: null, name: '' });
   };
@@ -584,10 +665,48 @@ export const AdminPanel = () => {
               {brands.length}
             </span>
           </button>
+
+          {/* ML Model Management Tab */}
+          <button
+            onClick={() => {
+              setActiveTab('ml');
+              setSearchQuery('');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.65rem 1.2rem',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              transition: 'var(--transition-fast)',
+              backgroundColor: activeTab === 'ml' ? '#7c3aed' : '#f1f5f9',
+              color: activeTab === 'ml' ? 'white' : 'var(--text-secondary)'
+            }}
+          >
+            <Activity size={17} style={{ flexShrink: 0 }} />
+            <span>ML Model</span>
+            <span
+              style={{
+                backgroundColor: activeTab === 'ml' ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+                color: activeTab === 'ml' ? 'white' : 'var(--text-main)',
+                fontSize: '0.75rem',
+                padding: '0.15rem 0.55rem',
+                borderRadius: '999px',
+                fontWeight: 700,
+                flexShrink: 0
+              }}
+            >
+              Review
+            </span>
+          </button>
         </div>
 
         {/* Right Search and Add Actions */}
-        <div className="admin-controls-right" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+        <div className="admin-controls-right" style={{ display: activeTab === 'ml' ? 'none' : 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
           <div className="admin-search-wrapper" style={{ position: 'relative', width: '220px' }}>
             <Search
               size={16}
@@ -638,7 +757,7 @@ export const AdminPanel = () => {
                 <th>Email Address</th>
                 <th style={{ width: '140px' }}>Role</th>
                 <th style={{ width: '120px' }}>Status</th>
-                <th style={{ width: '150px', textAlign: 'center' }}>Actions</th>
+                <th style={{ width: '240px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -672,6 +791,25 @@ export const AdminPanel = () => {
                     </td>
                     <td>
                       <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem' }}>
+                        <button
+                          onClick={() => handleInspectUser(user)}
+                          title="Inspect User Records & History"
+                          style={{
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            color: '#16a34a',
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          <Eye size={13} /> Inspect
+                        </button>
                         <button
                           onClick={() => handleOpenEdit(user)}
                           title="Edit User"
@@ -926,7 +1064,8 @@ export const AdminPanel = () => {
         </div>
       )}
 
-      {/* ================= ADD / EDIT MODAL ================= */}
+      {/* ================= TAB 4: ML MODEL MANAGEMENT ================= */}
+      {activeTab === 'ml' && <MlModelPanel />}
       {modalOpen && (
         <div
           style={{
@@ -1080,6 +1219,30 @@ export const AdminPanel = () => {
                       />
                     </div>
                   </div>
+                  <div className="modal-form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.8rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Latitude (-90 to 90)</label>
+                      <input
+                        type="number"
+                        step="any"
+                        className="form-input"
+                        value={garageFormData.latitude}
+                        onChange={(e) => setGarageFormData({ ...garageFormData, latitude: e.target.value })}
+                        placeholder="e.g. 6.9271"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Longitude (-180 to 180)</label>
+                      <input
+                        type="number"
+                        step="any"
+                        className="form-input"
+                        value={garageFormData.longitude}
+                        onChange={(e) => setGarageFormData({ ...garageFormData, longitude: e.target.value })}
+                        placeholder="e.g. 79.8612"
+                      />
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -1205,6 +1368,370 @@ export const AdminPanel = () => {
                 }}
               >
                 Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= USER DETAILS INSPECTION MODAL ================= */}
+      {inspectModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1700,
+            padding: '1.2rem',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            className="card admin-inspect-modal-card"
+            style={{
+              width: '100%',
+              maxWidth: '900px',
+              maxHeight: '88vh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '1.8rem 2rem',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              background: 'white',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Modal Top Header */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                borderBottom: '1px solid var(--border-color)',
+                paddingBottom: '1rem',
+                marginBottom: '1rem'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--primary-blue)', margin: 0 }}>
+                    User Inspection: {inspectUser?.name || 'Account Details'}
+                  </h3>
+                  <span className={`badge ${inspectUser?.role === 'Administrator' ? 'badge-purple' : 'badge-blue'}`}>
+                    {inspectUser?.role}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', marginTop: '0.4rem', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                  <span><strong>ID:</strong> #{inspectUser?.id}</span>
+                  <span><strong>Email:</strong> {inspectUser?.email}</span>
+                  {inspectDetails?.user?.contactNo && (
+                    <span><strong>Phone:</strong> {inspectDetails.user.contactNo}</span>
+                  )}
+                  {inspectDetails?.user?.location && (
+                    <span><strong>Location:</strong> {inspectDetails.user.location}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setInspectModalOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-muted)'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Inspect Sub-Tabs */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                borderBottom: '1px solid var(--border-color)',
+                paddingBottom: '0.6rem',
+                marginBottom: '1.2rem',
+                overflowX: 'auto'
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setInspectTab('vehicles')}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: inspectTab === 'vehicles' ? 'var(--primary-blue)' : '#f1f5f9',
+                  color: inspectTab === 'vehicles' ? 'white' : 'var(--text-secondary)'
+                }}
+              >
+                <Car size={15} />
+                <span>Vehicles</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>({inspectDetails?.vehicles?.length || 0})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setInspectTab('symptoms')}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: inspectTab === 'symptoms' ? 'var(--primary-blue)' : '#f1f5f9',
+                  color: inspectTab === 'symptoms' ? 'white' : 'var(--text-secondary)'
+                }}
+              >
+                <Activity size={15} />
+                <span>Symptoms</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>({inspectDetails?.symptoms?.length || 0})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setInspectTab('diagnoses')}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: inspectTab === 'diagnoses' ? 'var(--primary-blue)' : '#f1f5f9',
+                  color: inspectTab === 'diagnoses' ? 'white' : 'var(--text-secondary)'
+                }}
+              >
+                <FileText size={15} />
+                <span>Diagnoses</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>({inspectDetails?.diagnoses?.length || 0})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setInspectTab('recommendations')}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: inspectTab === 'recommendations' ? 'var(--primary-blue)' : '#f1f5f9',
+                  color: inspectTab === 'recommendations' ? 'white' : 'var(--text-secondary)'
+                }}
+              >
+                <Compass size={15} />
+                <span>Recommendations</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>({inspectDetails?.recommendations?.length || 0})</span>
+              </button>
+            </div>
+
+            {/* Scrollable Inspect Content Area */}
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.4rem' }}>
+              {inspectLoading ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  <div className="spin" style={{ width: '24px', height: '24px', border: '3px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 1rem auto' }} />
+                  Loading user records...
+                </div>
+              ) : !inspectDetails ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  No details retrieved for this user.
+                </div>
+              ) : (
+                <>
+                  {/* TAB: VEHICLES */}
+                  {inspectTab === 'vehicles' && (
+                    <div>
+                      {inspectDetails.vehicles?.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No vehicles registered by this user.</p>
+                      ) : (
+                        <table className="custom-table" style={{ fontSize: '0.88rem' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '60px' }}>ID</th>
+                              <th>Brand & Model</th>
+                              <th>Year</th>
+                              <th>Fuel Type</th>
+                              <th>Category</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {inspectDetails.vehicles.map((v) => (
+                              <tr key={v.vehicleId}>
+                                <td style={{ fontWeight: 700, color: 'var(--primary-blue-mid)' }}>#{v.vehicleId}</td>
+                                <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                                  {v.brand} {v.modelName || ''}
+                                </td>
+                                <td>{v.year || 'N/A'}</td>
+                                <td><span className="badge badge-orange">{v.fuelType || 'N/A'}</span></td>
+                                <td><span className="badge badge-blue">{v.vehicleType || 'N/A'}</span></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB: SYMPTOMS */}
+                  {inspectTab === 'symptoms' && (
+                    <div>
+                      {inspectDetails.symptoms?.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No symptoms logged by this user.</p>
+                      ) : (
+                        <table className="custom-table" style={{ fontSize: '0.88rem' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '60px' }}>ID</th>
+                              <th>Reported Symptom</th>
+                              <th style={{ width: '100px' }}>Vehicle ID</th>
+                              <th style={{ width: '160px' }}>Reported At</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {inspectDetails.symptoms.map((s) => (
+                              <tr key={s.symptomId}>
+                                <td style={{ fontWeight: 700, color: 'var(--primary-blue-mid)' }}>#{s.symptomId}</td>
+                                <td style={{ wordBreak: 'break-word', color: 'var(--text-main)' }}>{s.description}</td>
+                                <td>{s.vehicleId ? `#${s.vehicleId}` : 'None'}</td>
+                                <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                                  {s.createdAt ? new Date(s.createdAt).toLocaleString() : 'N/A'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB: DIAGNOSES */}
+                  {inspectTab === 'diagnoses' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                      {inspectDetails.diagnoses?.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No diagnostic assessments found for this user.</p>
+                      ) : (
+                        inspectDetails.diagnoses.map((d) => (
+                          <div
+                            key={d.diagnosisId}
+                            style={{
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '12px',
+                              padding: '1rem 1.2rem',
+                              background: '#f8fafc',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.4rem',
+                              fontSize: '0.88rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <span style={{ fontWeight: 800, color: 'var(--primary-blue)', fontSize: '0.95rem' }}>
+                                #{d.diagnosisId} • {d.faultName || 'General Assessment'}
+                              </span>
+                              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                {d.responseType && (
+                                  <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>{d.responseType}</span>
+                                )}
+                                {d.confidenceLevel != null && (
+                                  <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>
+                                    {Math.round(d.confidenceLevel * 100)}% Confidence
+                                  </span>
+                                )}
+                                {d.safeToDrive === true ? (
+                                  <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>Safe</span>
+                                ) : d.safeToDrive === false ? (
+                                  <span className="badge badge-red" style={{ fontSize: '0.72rem', background: '#fee2e2', color: '#dc2626' }}>Unsafe</span>
+                                ) : null}
+                              </div>
+                            </div>
+                            {d.possibleCause && (
+                              <p style={{ margin: '0.3rem 0', color: 'var(--text-main)', lineHeight: 1.5 }}>
+                                <strong>Assessment:</strong> {d.possibleCause}
+                              </p>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                              <span>Model Used: {d.modelUsed || 'hybrid-naivebayes+groq'}</span>
+                              <span>{d.createdAt ? new Date(d.createdAt).toLocaleString() : ''}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB: RECOMMENDATIONS */}
+                  {inspectTab === 'recommendations' && (
+                    <div>
+                      {inspectDetails.recommendations?.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No garage recommendations recorded for this user.</p>
+                      ) : (
+                        <table className="custom-table" style={{ fontSize: '0.88rem' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '60px' }}>ID</th>
+                              <th>Garage ID</th>
+                              <th>Diagnosis ID</th>
+                              <th>Distance (km)</th>
+                              <th>Match Score</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {inspectDetails.recommendations.map((r) => (
+                              <tr key={r.recommendationId}>
+                                <td style={{ fontWeight: 700, color: 'var(--primary-blue-mid)' }}>#{r.recommendationId}</td>
+                                <td style={{ fontWeight: 600 }}>Garage #{r.garageId}</td>
+                                <td>{r.diagnosisId ? `#${r.diagnosisId}` : 'N/A'}</td>
+                                <td>{r.distance != null ? `${r.distance.toFixed(1)} km` : 'N/A'}</td>
+                                <td>{r.matchScore != null ? r.matchScore.toFixed(2) : 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Bottom Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', marginTop: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => setInspectModalOpen(false)}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.55rem 1.4rem' }}
+              >
+                Close Details
               </button>
             </div>
           </div>

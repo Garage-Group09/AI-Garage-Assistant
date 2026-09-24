@@ -109,18 +109,19 @@ export const Navbar = () => {
               <button
                 onClick={handleLogout}
                 title="Logout"
+                className="navbar-logout-btn"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.3rem',
                   background: 'rgba(255,255,255,0.12)', border: 'none',
                   borderRadius: '999px', padding: '0.25rem 0.65rem',
                   color: 'white', fontSize: '0.8rem', fontWeight: 600,
-                  cursor: 'pointer', transition: 'background 0.2s'
+                  cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0
                 }}
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(249,115,22,0.35)'}
                 onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
               >
                 <LogOut size={14} />
-                Logout
+                <span className="logout-text">Logout</span>
               </button>
             </div>
           ) : (

@@ -10,4 +10,7 @@ import java.util.List;
 public interface ChatHistoryRepository extends JpaRepository<ChatHistory, Long> {
 
     List<ChatHistory> findByUserIdOrderByCreatedAtAsc(Integer userId);
+
+    List<ChatHistory> findByUserIdAndVehicleIdOrderByCreatedAtAsc(Integer userId, Integer vehicleId);
+    List<ChatHistory> findByUserIdAndVehicleIdAndSessionIdOrderByCreatedAtAsc(Integer userId, Integer vehicleId, String sessionId);
 }

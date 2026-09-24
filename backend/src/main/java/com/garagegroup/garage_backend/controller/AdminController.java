@@ -9,30 +9,47 @@ import com.garagegroup.garage_backend.entity.Garage;
 import com.garagegroup.garage_backend.entity.User;
 import com.garagegroup.garage_backend.entity.VehicleBrand;
 import com.garagegroup.garage_backend.entity.VehicleModel;
+import com.garagegroup.garage_backend.repository.GarageRecommendationRepository;
 import com.garagegroup.garage_backend.repository.GarageRepository;
+import com.garagegroup.garage_backend.repository.SymptomRepository;
 import com.garagegroup.garage_backend.repository.UserRepository;
 import com.garagegroup.garage_backend.repository.VehicleBrandRepository;
 import com.garagegroup.garage_backend.repository.VehicleModelRepository;
+import com.garagegroup.garage_backend.repository.VehicleRepository;
+import com.garagegroup.garage_backend.repository.DiagnosisRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.garagegroup.garage_backend.entity.Diagnosis;
+import com.garagegroup.garage_backend.entity.Symptom;
+import com.garagegroup.garage_backend.repository.SymptomRepository;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * AdminController — exposes privileged user-management endpoints.
  *
- * Auth strategy (interim):
- *   Every request must supply the admin's own user ID in the
- *   "X-Admin-User-Id" request header.  The server performs a live
- *   database look-up and returns HTTP 403 if the caller is not an admin.
- *   (This will be replaced with proper session / JWT-based auth later.)
+ * Auth strategy:
+ *   Derives caller identity strictly from the server-validated session
+ *   (via AuthFilter and HttpServletRequest attribute "currentUser").
+ *   Caller-supplied headers cannot bypass server-side role validation.
  */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
+    @Autowired
+    private HttpServletRequest request;
 
     @Autowired
     private UserRepository userRepository;
@@ -46,23 +63,35 @@ public class AdminController {
     @Autowired
     private GarageRepository garageRepository;
 
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private SymptomRepository symptomRepository;
+
+    @Autowired
+    private DiagnosisRepository diagnosisRepository;
+
+    @Autowired
+    private GarageRecommendationRepository garageRecommendationRepository;
+
+    @Autowired(required = false)
+    private com.garagegroup.garage_backend.service.NaiveBayesService naiveBayesService;
+
     // ── Auth helper ───────────────────────────────────────────────────────────
 
     /**
-     * Returns true only when the header contains a valid user-ID that
-     * corresponds to an admin account in the database.
+     * Returns true only when the authenticated session user has admin privileges.
+     * Never trusts unverified caller-supplied headers.
      */
+    private boolean isCallerAdmin() {
+        if (request == null) return false;
+        User caller = (User) request.getAttribute("currentUser");
+        return caller != null && caller.isAdmin();
+    }
+
     private boolean isCallerAdmin(String adminUserIdHeader) {
-        if (adminUserIdHeader == null || adminUserIdHeader.isBlank()) {
-            return false;
-        }
-        try {
-            int callerId = Integer.parseInt(adminUserIdHeader.trim());
-            Optional<User> caller = userRepository.findById(callerId);
-            return caller.isPresent() && caller.get().isAdmin();
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return isCallerAdmin();
     }
 
     // ── GET /api/admin/users ──────────────────────────────────────────────────
@@ -74,9 +103,9 @@ public class AdminController {
      */
     @GetMapping("/users")
     public ResponseEntity<?> listAllUsers(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader) {
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
 
-        if (!isCallerAdmin(adminUserIdHeader)) {
+        if (!isCallerAdmin()) {
             return ResponseEntity.status(403).body("Access denied: admin privileges required.");
         }
 
@@ -86,6 +115,57 @@ public class AdminController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(users);
+    }
+
+    // ── GET /api/admin/users/{id}/details ─────────────────────────────────────
+
+    /**
+     * Admin-only user inspection view: returns a user's vehicles, symptoms,
+     * diagnostic assessments, and garage recommendations.
+     * Passwords, hashes, and internal secrets are strictly excluded.
+     */
+    @GetMapping("/users/{id}/details")
+    public ResponseEntity<?> getUserDetails(
+            @PathVariable Integer id,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
+
+        if (!isCallerAdmin()) {
+            return ResponseEntity.status(403).body("Access denied: admin privileges required.");
+        }
+
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(404).body("User not found with ID: " + id);
+        }
+
+        User user = optionalUser.get();
+        UserAdminDto userDto = UserAdminDto.from(user);
+
+        // Fetch user vehicles with resolved model names
+        List<com.garagegroup.garage_backend.entity.Vehicle> vehicles = vehicleRepository.findByUserId(id);
+        for (com.garagegroup.garage_backend.entity.Vehicle v : vehicles) {
+            if (v.getModelId() != null) {
+                modelRepository.findById(v.getModelId()).ifPresent(m -> v.setModelName(m.getModelName()));
+            }
+        }
+
+        // Fetch symptoms
+        List<com.garagegroup.garage_backend.entity.Symptom> symptoms = symptomRepository.findByUserId(id);
+
+        // Fetch diagnoses
+        List<com.garagegroup.garage_backend.entity.Diagnosis> diagnoses = diagnosisRepository.findAllByUserId(id);
+
+        // Fetch garage recommendations
+        List<com.garagegroup.garage_backend.entity.GarageRecommendation> recommendations = garageRecommendationRepository.findByUserId(id);
+
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("user", userDto);
+        details.put("vehicles", vehicles);
+        details.put("symptoms", symptoms);
+        details.put("diagnoses", diagnoses);
+        details.put("recommendations", recommendations);
+
+        return ResponseEntity.ok(details);
     }
 
     // ── PUT /api/admin/users/{id} ─────────────────────────────────────────────
@@ -101,7 +181,7 @@ public class AdminController {
     @PutMapping("/users/{id}")
     public ResponseEntity<?> updateUser(
             @PathVariable Integer id,
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestBody UpdateUserRequest request) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -135,7 +215,7 @@ public class AdminController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(
             @PathVariable Integer id,
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader) {
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
             return ResponseEntity.status(403).body("Access denied: admin privileges required.");
@@ -157,7 +237,7 @@ public class AdminController {
      */
     @GetMapping("/brands")
     public ResponseEntity<?> listAllBrands(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader) {
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
             return ResponseEntity.status(403).body("Access denied: admin privileges required.");
@@ -176,7 +256,7 @@ public class AdminController {
      */
     @PostMapping("/brands")
     public ResponseEntity<?> createBrand(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestBody CreateBrandRequest request) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -205,7 +285,7 @@ public class AdminController {
      */
     @GetMapping("/models")
     public ResponseEntity<?> listModels(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestParam(required = false) Integer brandId) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -228,7 +308,7 @@ public class AdminController {
      */
     @PostMapping("/models")
     public ResponseEntity<?> createModel(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestBody CreateModelRequest request) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -252,7 +332,7 @@ public class AdminController {
     /** Returns all garages. */
     @GetMapping("/garages")
     public ResponseEntity<?> listAllGarages(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader) {
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
             return ResponseEntity.status(403).body("Access denied: admin privileges required.");
@@ -265,7 +345,7 @@ public class AdminController {
     /** Creates a new garage record. Returns 400 if garageName is blank. */
     @PostMapping("/garages")
     public ResponseEntity<?> createGarage(
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestBody GarageRequest request) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -275,12 +355,25 @@ public class AdminController {
             return ResponseEntity.badRequest().body("garageName must not be blank.");
         }
 
+        if (request.getLatitude() != null) {
+            if (request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
+                return ResponseEntity.badRequest().body("Latitude must be between -90.0 and 90.0");
+            }
+        }
+        if (request.getLongitude() != null) {
+            if (request.getLongitude() < -180.0 || request.getLongitude() > 180.0) {
+                return ResponseEntity.badRequest().body("Longitude must be between -180.0 and 180.0");
+            }
+        }
+
         Garage garage = new Garage();
         garage.setGarageName(request.getGarageName().trim());
         if (request.getLocation()       != null) garage.setLocation(request.getLocation().trim());
         if (request.getSpecialization() != null) garage.setSpecialization(request.getSpecialization().trim());
         if (request.getRating()         != null) garage.setRating(request.getRating());
         if (request.getPhoneNo()        != null) garage.setPhoneNo(request.getPhoneNo().trim());
+        if (request.getLatitude()       != null) garage.setLatitude(request.getLatitude());
+        if (request.getLongitude()      != null) garage.setLongitude(request.getLongitude());
 
         return ResponseEntity.status(201).body(garageRepository.save(garage));
     }
@@ -291,7 +384,7 @@ public class AdminController {
     @PutMapping("/garages/{id}")
     public ResponseEntity<?> updateGarage(
             @PathVariable Integer id,
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
             @RequestBody GarageRequest request) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
@@ -302,14 +395,108 @@ public class AdminController {
             return ResponseEntity.status(404).body("Garage not found with ID: " + id);
         }
 
+        if (request.getLatitude() != null) {
+            if (request.getLatitude() < -90.0 || request.getLatitude() > 90.0) {
+                return ResponseEntity.badRequest().body("Latitude must be between -90.0 and 90.0");
+            }
+        }
+        if (request.getLongitude() != null) {
+            if (request.getLongitude() < -180.0 || request.getLongitude() > 180.0) {
+                return ResponseEntity.badRequest().body("Longitude must be between -180.0 and 180.0");
+            }
+        }
+
         Garage garage = opt.get();
         if (request.getGarageName()     != null) garage.setGarageName(request.getGarageName().trim());
         if (request.getLocation()       != null) garage.setLocation(request.getLocation().trim());
         if (request.getSpecialization() != null) garage.setSpecialization(request.getSpecialization().trim());
         if (request.getRating()         != null) garage.setRating(request.getRating());
         if (request.getPhoneNo()        != null) garage.setPhoneNo(request.getPhoneNo().trim());
+        if (request.getLatitude()       != null) garage.setLatitude(request.getLatitude());
+        if (request.getLongitude()      != null) garage.setLongitude(request.getLongitude());
 
         return ResponseEntity.ok(garageRepository.save(garage));
+    }
+
+    // ── PUT /api/admin/brands/{id} ────────────────────────────────────────────
+
+    /** Updates an existing brand and its models. */
+    @PutMapping("/brands/{id}")
+    public ResponseEntity<?> updateBrand(
+            @PathVariable Integer id,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader,
+            @RequestBody com.garagegroup.garage_backend.dto.UpdateBrandRequest request) {
+
+        if (!isCallerAdmin(adminUserIdHeader)) {
+            return ResponseEntity.status(403).body("Access denied: admin privileges required.");
+        }
+        Optional<VehicleBrand> opt = brandRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body("Brand not found with ID: " + id);
+        }
+
+        VehicleBrand brand = opt.get();
+        if (request.getBrandName() != null && !request.getBrandName().isBlank()) {
+            brand.setBrandName(request.getBrandName().trim());
+            brandRepository.save(brand);
+        }
+
+        if (request.getModels() != null) {
+            List<VehicleModel> existingModels = modelRepository.findByBrandId(id);
+            java.util.Set<String> newNames = request.getModels().stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(java.util.stream.Collectors.toSet());
+
+            for (VehicleModel em : existingModels) {
+                if (!newNames.contains(em.getModelName())) {
+                    try {
+                        modelRepository.delete(em);
+                    } catch (Exception e) {
+                        System.err.println("Could not delete model " + em.getModelName() + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            java.util.Set<String> existingNames = existingModels.stream()
+                    .map(VehicleModel::getModelName)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            for (String mName : newNames) {
+                if (!existingNames.contains(mName)) {
+                    VehicleModel vm = new VehicleModel();
+                    vm.setBrandId(id);
+                    vm.setModelName(mName);
+                    modelRepository.save(vm);
+                }
+            }
+        }
+
+        return ResponseEntity.ok(java.util.Map.of("message", "Brand updated successfully", "brandId", id));
+    }
+
+    // ── DELETE /api/admin/brands/{id} ─────────────────────────────────────────
+
+    /** Deletes an existing brand and its models. */
+    @DeleteMapping("/brands/{id}")
+    public ResponseEntity<?> deleteBrand(
+            @PathVariable Integer id,
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
+
+        if (!isCallerAdmin(adminUserIdHeader)) {
+            return ResponseEntity.status(403).body("Access denied: admin privileges required.");
+        }
+        if (!brandRepository.existsById(id)) {
+            return ResponseEntity.status(404).body("Brand not found with ID: " + id);
+        }
+        try {
+            List<VehicleModel> models = modelRepository.findByBrandId(id);
+            modelRepository.deleteAll(models);
+            brandRepository.deleteById(id);
+            return ResponseEntity.ok("Brand " + id + " deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(409).body("Cannot delete brand: It is currently linked to vehicles.");
+        }
     }
 
     // ── DELETE /api/admin/garages/{id} ────────────────────────────────────────
@@ -318,7 +505,7 @@ public class AdminController {
     @DeleteMapping("/garages/{id}")
     public ResponseEntity<?> deleteGarage(
             @PathVariable Integer id,
-            @RequestHeader("X-Admin-User-Id") String adminUserIdHeader) {
+            @RequestHeader(value = "X-Admin-User-Id", required = false) String adminUserIdHeader) {
 
         if (!isCallerAdmin(adminUserIdHeader)) {
             return ResponseEntity.status(403).body("Access denied: admin privileges required.");
@@ -329,4 +516,5 @@ public class AdminController {
         garageRepository.deleteById(id);
         return ResponseEntity.ok("Garage " + id + " deleted successfully.");
     }
+
 }

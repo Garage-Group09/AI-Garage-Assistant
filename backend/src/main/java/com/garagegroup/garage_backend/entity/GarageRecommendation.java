@@ -21,6 +21,9 @@ public class GarageRecommendation {
     @Column(name = "Garage_ID", nullable = false)
     private Integer garageId;
 
+    @Column(name = "Diagnosis_ID")
+    private Long diagnosisId;
+
     /**
      * Distance in kilometres between the user's location and the garage.
      * Nullable — populated when location data is available.
@@ -44,6 +47,9 @@ public class GarageRecommendation {
 
     public Integer getGarageId() { return garageId; }
     public void setGarageId(Integer garageId) { this.garageId = garageId; }
+
+    public Long getDiagnosisId() { return diagnosisId; }
+    public void setDiagnosisId(Long diagnosisId) { this.diagnosisId = diagnosisId; }
 
     public Double getDistance() { return distance; }
     public void setDistance(Double distance) { this.distance = distance; }

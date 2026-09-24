@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 
 /**
  * Maps to the garage table: Garage_ID, Garage_Name, Location,
- * Specialization, Rating, Phone_No.
+ * Specialization, Rating, Phone_No, latitude, longitude, is_demo.
+ *
+ * is_demo = true  → demo/placeholder entry used for testing and demonstration.
+ *                   Retained in the database for foreign-key history integrity.
+ * is_demo = false → real business entry in the locally maintained garage directory.
  */
 @Entity
 @Table(name = "garage")
@@ -30,6 +34,15 @@ public class Garage {
     @Column(name = "Phone_No")
     private String phoneNo;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "is_demo", nullable = false)
+    private boolean isDemo = true;
+
     // ── Getters & Setters ─────────────────────────────────────────────────────
 
     public Integer getGarageId()                  { return garageId; }
@@ -49,4 +62,14 @@ public class Garage {
 
     public String  getPhoneNo()                    { return phoneNo; }
     public void    setPhoneNo(String phoneNo)      { this.phoneNo = phoneNo; }
+
+    public Double  getLatitude()                   { return latitude; }
+    public void    setLatitude(Double latitude)    { this.latitude = latitude; }
+
+    public Double  getLongitude()                  { return longitude; }
+    public void    setLongitude(Double longitude)  { this.longitude = longitude; }
+
+    public boolean isDemo()                        { return isDemo; }
+    public boolean getIsDemo()                     { return isDemo; }
+    public void    setDemo(boolean isDemo)         { this.isDemo = isDemo; }
 }

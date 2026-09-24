@@ -13,7 +13,7 @@ export const Footer = () => {
         </div>
        
         <div className="footer-links" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem', fontSize: '0.85rem', color: '#187ffd', textAlign: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><ShieldCheck size={14} style={{ flexShrink: 0 }} /> Certified Diagnostics</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><ShieldCheck size={14} style={{ flexShrink: 0 }} /> AI-Assisted Diagnostics (Academic Prototype)</span>
           <span>• 24/7 Virtual Assistant</span>
           <span>• Sinhala / Tamil / English</span>
         </div>

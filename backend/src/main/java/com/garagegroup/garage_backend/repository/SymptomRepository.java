@@ -10,4 +10,6 @@ import java.util.List;
 public interface SymptomRepository extends JpaRepository<Symptom, Long> {
 
     List<Symptom> findByVehicleId(Integer vehicleId);
+
+    List<Symptom> findByUserId(Integer userId);
 }

@@ -19,6 +19,12 @@ public class ChatHistory {
     @Column(name = "User_ID", nullable = false)
     private Integer userId;
 
+    @Column(name = "Vehicle_ID")
+    private Integer vehicleId;
+
+    @Column(name = "session_id", length = 64)
+    private String sessionId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "Sender", nullable = false)
     private Sender sender;
@@ -36,12 +42,23 @@ public class ChatHistory {
         }
     }
 
+    @Column(name = "metadata_json", columnDefinition = "TEXT")
+    private String metadataJson;
+    public String getMetadataJson() { return metadataJson; }
+    public void setMetadataJson(String value) { metadataJson = value; }
+
     // Getters and Setters
     public Long getChatId() { return chatId; }
     public void setChatId(Long chatId) { this.chatId = chatId; }
 
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
+
+    public Integer getVehicleId() { return vehicleId; }
+    public void setVehicleId(Integer vehicleId) { this.vehicleId = vehicleId; }
+
+    public String getSessionId() { return sessionId; }
+    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
 
     public Sender getSender() { return sender; }
     public void setSender(Sender sender) { this.sender = sender; }

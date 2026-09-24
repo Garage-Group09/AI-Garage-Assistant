@@ -6,6 +6,7 @@ public class DiagnosisRequest {
     private String message;
     private String language;
     private String modelUsed;   // optional — override model label (Isfak's pipeline)
+    private String sessionId;   // optional — scopes chat history to active session
 
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
@@ -21,4 +22,7 @@ public class DiagnosisRequest {
 
     public String getModelUsed() { return modelUsed; }
     public void setModelUsed(String modelUsed) { this.modelUsed = modelUsed; }
+
+    public String getSessionId() { return sessionId; }
+    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
 }

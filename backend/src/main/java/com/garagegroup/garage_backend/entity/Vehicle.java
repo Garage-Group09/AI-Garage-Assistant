@@ -3,7 +3,7 @@ package com.garagegroup.garage_backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Vehicle")
+@Table(name = "vehicle")
 public class Vehicle {
 
     @Id
@@ -29,6 +29,9 @@ public class Vehicle {
     @Column(name = "Year")
     private Integer year;
 
+    @Transient
+    private String modelName;
+
     public Integer getVehicleId() { return vehicleId; }
     public void setVehicleId(Integer vehicleId) { this.vehicleId = vehicleId; }
 
@@ -49,4 +52,7 @@ public class Vehicle {
 
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
-}
+
+    public String getModelName() { return modelName; }
+    public void setModelName(String modelName) { this.modelName = modelName; }
+}

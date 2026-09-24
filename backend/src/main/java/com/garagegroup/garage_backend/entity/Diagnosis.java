@@ -4,13 +4,17 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Diagnosis")
+@Table(name = "diagnosis")
 public class Diagnosis {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Diagnosis_ID")
     private Long diagnosisId;
+
+    @Column(name = "response_type")
+    @Enumerated(EnumType.STRING)
+    private ResponseType responseType;
 
     @Column(name = "Symptom_ID", nullable = false)
     private Long symptomId;
@@ -33,6 +37,15 @@ public class Diagnosis {
     @Column(name = "Max_Cost")
     private Double maxCost;
 
+    @Column(name = "cost_estimate_source")
+    private String costEstimateSource;
+
+    @Column(name = "cost_currency")
+    private String costCurrency = "LKR";
+
+    @Column(name = "cost_assumptions")
+    private String costAssumptions;
+
     @Column(name = "Created_At", nullable = false)
     private LocalDateTime createdAt;
 
@@ -49,9 +62,21 @@ public class Diagnosis {
         }
     }
 
+    public enum ResponseType {
+        GREETING, CLARIFICATION, DIAGNOSIS
+    }
+
+    @Column(name = "session_id", length = 64)
+    private String sessionId;
+    public String getSessionId() { return sessionId; }
+    public void setSessionId(String value) { sessionId = value; }
+
     // Getters and Setters
     public Long getDiagnosisId() { return diagnosisId; }
     public void setDiagnosisId(Long diagnosisId) { this.diagnosisId = diagnosisId; }
+
+    public ResponseType getResponseType() { return responseType; }
+    public void setResponseType(ResponseType responseType) { this.responseType = responseType; }
 
     public Long getSymptomId() { return symptomId; }
     public void setSymptomId(Long symptomId) { this.symptomId = symptomId; }
@@ -73,6 +98,15 @@ public class Diagnosis {
 
     public Double getMaxCost() { return maxCost; }
     public void setMaxCost(Double maxCost) { this.maxCost = maxCost; }
+
+    public String getCostEstimateSource() { return costEstimateSource; }
+    public void setCostEstimateSource(String costEstimateSource) { this.costEstimateSource = costEstimateSource; }
+
+    public String getCostCurrency() { return costCurrency; }
+    public void setCostCurrency(String costCurrency) { this.costCurrency = costCurrency; }
+
+    public String getCostAssumptions() { return costAssumptions; }
+    public void setCostAssumptions(String costAssumptions) { this.costAssumptions = costAssumptions; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

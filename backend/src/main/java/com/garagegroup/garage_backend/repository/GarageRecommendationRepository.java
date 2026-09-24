@@ -11,4 +11,5 @@ public interface GarageRecommendationRepository extends JpaRepository<GarageReco
 
     /** All recommendations ever generated for a specific user. */
     List<GarageRecommendation> findByUserId(Integer userId);
+    java.util.Optional<GarageRecommendation> findFirstByUserIdAndGarageIdAndDiagnosisId(Integer userId, Integer garageId, Long diagnosisId);
 }

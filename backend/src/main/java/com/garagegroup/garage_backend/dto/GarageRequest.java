@@ -11,6 +11,8 @@ public class GarageRequest {
     private String specialization;
     private Double rating;
     private String phoneNo;
+    private Double latitude;
+    private Double longitude;
 
     // ── Getters & Setters ─────────────────────────────────────────────────────
 
@@ -28,4 +30,10 @@ public class GarageRequest {
 
     public String  getPhoneNo()                  { return phoneNo; }
     public void    setPhoneNo(String p)          { this.phoneNo = p; }
+
+    public Double  getLatitude()                 { return latitude; }
+    public void    setLatitude(Double lat)       { this.latitude = lat; }
+
+    public Double  getLongitude()                { return longitude; }
+    public void    setLongitude(Double lng)      { this.longitude = lng; }
 }

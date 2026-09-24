@@ -90,14 +90,9 @@ export const LoginPage = () => {
 
             {/* Password Field */}
             <div className="form-group" style={{ marginBottom: '1.8rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>
-                  Password
-                </label>
-                <a href="#forgot" onClick={(e) => e.preventDefault()} style={{ fontSize: '0.82rem', color: 'var(--primary-blue-mid)', fontWeight: 600, textDecoration: 'none' }}>
-                  Forgot password?
-                </a>
-              </div>
+              <label className="form-label" htmlFor="password" style={{ display: 'block', marginBottom: '0.4rem' }}>
+                Password
+              </label>
               <div style={{ position: 'relative' }}>
                 <Lock
                   size={18}

@@ -1,0 +1,146 @@
+{
+  "version": "v1.0.0",
+  "timestamp": "2026-09-24T02:42:44.151988",
+  "total_dataset_size": 112,
+  "train_samples": 91,
+  "test_samples": 21,
+  "vocabulary_size": 461,
+  "evaluation": {
+    "accuracy": 0.619,
+    "macro_f1": 0.5976,
+    "macro_precision": 0.681,
+    "macro_recall": 0.619,
+    "per_class": {
+      "air_conditioning": {
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1_score": 0.75,
+        "support": 3
+      },
+      "brake_system": {
+        "precision": 0.5,
+        "recall": 0.3333,
+        "f1_score": 0.4,
+        "support": 3
+      },
+      "cooling_system": {
+        "precision": 0.6667,
+        "recall": 0.6667,
+        "f1_score": 0.6667,
+        "support": 3
+      },
+      "electrical_battery": {
+        "precision": 0.5,
+        "recall": 0.3333,
+        "f1_score": 0.4,
+        "support": 3
+      },
+      "engine_mechanical": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1_score": 0.6667,
+        "support": 3
+      },
+      "tires_suspension": {
+        "precision": 1.0,
+        "recall": 0.3333,
+        "f1_score": 0.5,
+        "support": 3
+      },
+      "transmission": {
+        "precision": 1.0,
+        "recall": 0.6667,
+        "f1_score": 0.8,
+        "support": 3
+      }
+    },
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2
+      ]
+    ],
+    "classes": [
+      "air_conditioning",
+      "brake_system",
+      "cooling_system",
+      "electrical_battery",
+      "engine_mechanical",
+      "tires_suspension",
+      "transmission"
+    ],
+    "total_test_samples": 21
+  },
+  "provenance_breakdown": {
+    "academic_seed_benchmark": 70,
+    "synthetic_variation": 42
+  },
+  "class_distribution": {
+    "air_conditioning": 16,
+    "brake_system": 16,
+    "cooling_system": 16,
+    "electrical_battery": 16,
+    "engine_mechanical": 16,
+    "tires_suspension": 16,
+    "transmission": 16
+  }
+}
