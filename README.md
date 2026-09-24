@@ -156,7 +156,7 @@ These four names/areas were recorded in the uploaded README. Git history was not
 | Sasika Dinushankha | Backend security and core services |
 | Sanduni Navodya Thilakasiri | Administration and frontend UI |
 | Maryam Mohamed Mihlar | Database design and data modelling |
-| Fifth member — team to complete | Actual contribution to be provided |
+| Nayanajith | Manual testing, UI support, and project documentation |
 
 AI-assisted changes do not establish which student originally implemented a subsystem. Replace the reported areas with agreed evidence-based contributions.
 
